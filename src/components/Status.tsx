@@ -12,9 +12,21 @@ export function Status({ gameState }: StatusProps) {
       </div>
     )
   }
+
+  if (gameState.isAIThinking) {
+    return (
+      <div className="status ai-thinking">
+        <span>AI 正在思考</span>
+        <span className="thinking-dots">...</span>
+      </div>
+    )
+  }
+
+  const isAITurn = gameState.settings.mode === 'ai' && gameState.currentPlayer === 'white'
+
   return (
     <div className="status">
-      {gameState.currentPlayer === 'black' ? '黑棋' : '白棋'} 回合
+      {isAITurn ? '白棋 (AI)' : (gameState.currentPlayer === 'black' ? '黑棋' : '白棋')} 回合
     </div>
   )
 }
