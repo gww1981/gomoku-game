@@ -11,6 +11,8 @@ export interface GameState {
   status: GameStatus
   winner: Player | null
   lastMove: Position | null
+  settings: GameSettings
+  isAIThinking: boolean
 }
 export type GameAction =
   | { type: 'MOVE'; row: number; col: number }

@@ -1,6 +1,7 @@
 import type { Board, Player } from '../types'
 import type { AIDecision } from './types'
 import { BOARD_SIZE, canPlacePiece, checkWin } from '../gameLogic'
+import { getAIMove as getMediumMove } from './aiMedium'
 
 const MAX_DEPTH = 3
 
@@ -173,7 +174,6 @@ export function getAIMove(board: Board, player: Player): AIDecision | null {
   }
 
   if (!bestMove) {
-    const { getAIMove: getMediumMove } = require('./aiMedium')
     return getMediumMove(board, player)
   }
 
