@@ -106,7 +106,7 @@ describe('checkWin - left diagonal', () => {
 })
 
 import { gameReducer, getInitialGameState } from './gameReducer'
-import { GameAction } from './types'
+import type { GameAction } from './types'
 
 describe('gameReducer', () => {
   it('should return initial state', () => {

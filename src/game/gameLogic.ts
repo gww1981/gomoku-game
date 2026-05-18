@@ -1,4 +1,4 @@
-import { Board, Player } from './types'
+import type { Board, Player } from './types'
 
 export const BOARD_SIZE = 15
 

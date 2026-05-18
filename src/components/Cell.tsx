@@ -1,4 +1,4 @@
-import { Player } from '../game/types'
+import type { Player } from '../game/types'
 
 interface CellProps {
   piece: Player | null

@@ -1,4 +1,4 @@
-import { GameState, GameAction, Player } from './types'
+import type { GameState, GameAction, Player } from './types'
 import { createEmptyBoard, canPlacePiece, checkWin } from './gameLogic'
 
 export function getInitialGameState(): GameState {
