@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createEmptyBoard, canPlacePiece, BOARD_SIZE } from './gameLogic'
+import { createEmptyBoard, canPlacePiece, BOARD_SIZE, checkWin } from './gameLogic'
 
 describe('createEmptyBoard', () => {
   it('should create 15x15 board filled with null', () => {
@@ -29,5 +29,36 @@ describe('canPlacePiece', () => {
     expect(canPlacePiece(board, 15, 0)).toBe(false)
     expect(canPlacePiece(board, 0, 15)).toBe(false)
     expect(canPlacePiece(board, -1, 0)).toBe(false)
+  })
+})
+
+describe('checkWin - horizontal', () => {
+  it('should return true for 5 consecutive black pieces horizontally', () => {
+    const board = createEmptyBoard()
+    board[7][3] = 'black'
+    board[7][4] = 'black'
+    board[7][5] = 'black'
+    board[7][6] = 'black'
+    board[7][7] = 'black'
+    expect(checkWin(board, 7, 5, 'black')).toBe(true)
+  })
+
+  it('should return false for less than 5 consecutive pieces', () => {
+    const board = createEmptyBoard()
+    board[7][3] = 'black'
+    board[7][4] = 'black'
+    board[7][5] = 'black'
+    board[7][6] = 'black'
+    expect(checkWin(board, 7, 5, 'black')).toBe(false)
+  })
+
+  it('should return false for opponent pieces', () => {
+    const board = createEmptyBoard()
+    board[7][3] = 'white'
+    board[7][4] = 'white'
+    board[7][5] = 'white'
+    board[7][6] = 'white'
+    board[7][7] = 'white'
+    expect(checkWin(board, 7, 5, 'black')).toBe(false)
   })
 })

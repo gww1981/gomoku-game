@@ -12,3 +12,19 @@ export function canPlacePiece(board: Board, row: number, col: number): boolean {
   }
   return board[row][col] === null
 }
+
+export function checkWin(board: Board, row: number, col: number, player: Player): boolean {
+  // Check horizontal (left-right)
+  let count = 1
+  // Left
+  for (let c = col - 1; c >= 0 && board[row][c] === player; c--) {
+    count++
+  }
+  // Right
+  for (let c = col + 1; c < BOARD_SIZE && board[row][c] === player; c++) {
+    count++
+  }
+  if (count >= 5) return true
+
+  return false
+}
