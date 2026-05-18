@@ -26,5 +26,11 @@ export function checkWin(board: Board, row: number, col: number, player: Player)
   for (let r = row + 1; r < BOARD_SIZE && board[r][col] === player; r++) count++
   if (count >= 5) return true
 
+  // Check left diagonal (top-left to bottom-right)
+  count = 1
+  for (let i = 1; row - i >= 0 && col - i >= 0 && board[row - i][col - i] === player; i++) count++
+  for (let i = 1; row + i < BOARD_SIZE && col + i < BOARD_SIZE && board[row + i][col + i] === player; i++) count++
+  if (count >= 5) return true
+
   return false
 }

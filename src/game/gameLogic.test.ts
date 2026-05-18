@@ -83,3 +83,24 @@ describe('checkWin - vertical', () => {
     expect(checkWin(board, 5, 7, 'black')).toBe(false)
   })
 })
+
+describe('checkWin - left diagonal', () => {
+  it('should return true for 5 consecutive black pieces on left diagonal', () => {
+    const board = createEmptyBoard()
+    board[3][3] = 'black'
+    board[4][4] = 'black'
+    board[5][5] = 'black'
+    board[6][6] = 'black'
+    board[7][7] = 'black'
+    expect(checkWin(board, 5, 5, 'black')).toBe(true)
+  })
+
+  it('should return false for less than 5 consecutive pieces on left diagonal', () => {
+    const board = createEmptyBoard()
+    board[3][3] = 'black'
+    board[4][4] = 'black'
+    board[5][5] = 'black'
+    board[6][6] = 'black'
+    expect(checkWin(board, 5, 5, 'black')).toBe(false)
+  })
+})
