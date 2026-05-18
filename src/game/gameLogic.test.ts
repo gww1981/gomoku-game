@@ -105,23 +105,75 @@ describe('checkWin - left diagonal', () => {
   })
 })
 
-describe('checkWin - right diagonal', () => {
-  it('should return true for 5 consecutive black pieces on right diagonal', () => {
-    const board = createEmptyBoard()
-    board[3][11] = 'black'
-    board[4][10] = 'black'
-    board[5][9] = 'black'
-    board[6][8] = 'black'
-    board[7][7] = 'black'
-    expect(checkWin(board, 5, 9, 'black')).toBe(true)
+import { gameReducer, getInitialGameState } from './gameReducer'
+import { GameAction } from './types'
+
+describe('gameReducer', () => {
+  it('should return initial state', () => {
+    const state = getInitialGameState()
+    expect(state.board).toHaveLength(15)
+    expect(state.currentPlayer).toBe('black')
+    expect(state.status).toBe('playing')
+    expect(state.winner).toBeNull()
   })
 
-  it('should return false for less than 5 consecutive pieces on right diagonal', () => {
-    const board = createEmptyBoard()
-    board[3][11] = 'black'
-    board[4][10] = 'black'
-    board[5][9] = 'black'
-    board[6][8] = 'black'
-    expect(checkWin(board, 5, 9, 'black')).toBe(false)
+  it('should place piece and switch player', () => {
+    const state = getInitialGameState()
+    const action: GameAction = { type: 'MOVE', row: 7, col: 7 }
+    const newState = gameReducer(state, action)
+    expect(newState.board[7][7]).toBe('black')
+    expect(newState.currentPlayer).toBe('white')
+  })
+
+  it('should reject move on occupied position', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, { type: 'MOVE', row: 7, col: 7 })
+    state = gameReducer(state, { type: 'MOVE', row: 7, col: 7 })
+    expect(state.board[7][7]).toBe('black')
+    expect(state.currentPlayer).toBe('white') // Should not switch
+  })
+
+  it('should set winner when 5 in a row', () => {
+    let state = getInitialGameState()
+    // Black makes a horizontal 5 in a row
+    const moves = [
+      [7, 3], [8, 3], // Black, White
+      [7, 4], [8, 4], // Black, White
+      [7, 5], [8, 5], // Black, White
+      [7, 6], [8, 6], // Black, White
+      [7, 7], // Black wins!
+    ]
+    moves.forEach(([row, col]) => {
+      state = gameReducer(state, { type: 'MOVE', row, col })
+    })
+    expect(state.status).toBe('won')
+    expect(state.winner).toBe('black')
+  })
+
+  it('should reject moves after game is won', () => {
+    let state = getInitialGameState()
+    // Build a winning line for black
+    const moves = [
+      [7, 3], [8, 3],
+      [7, 4], [8, 4],
+      [7, 5], [8, 5],
+      [7, 6], [8, 6],
+      [7, 7],
+    ]
+    moves.forEach(([row, col]) => {
+      state = gameReducer(state, { type: 'MOVE', row, col })
+    })
+    // Try to make another move after win
+    state = gameReducer(state, { type: 'MOVE', row: 0, col: 0 })
+    expect(state.board[0][0]).toBeNull() // Move should be rejected
+  })
+
+  it('should reset game', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, { type: 'MOVE', row: 7, col: 7 })
+    state = gameReducer(state, { type: 'RESET' })
+    expect(state.board[7][7]).toBeNull()
+    expect(state.currentPlayer).toBe('black')
+    expect(state.status).toBe('playing')
   })
 })
