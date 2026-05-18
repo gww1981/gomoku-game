@@ -1,73 +1,106 @@
-# React + TypeScript + Vite
+# 五子棋 Web 游戏
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个基于 React + TypeScript + Vite 构建的现代五子棋双人对战 Web 游戏。
 
-Currently, two official plugins are available:
+## 功能特性
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **15×15 标准棋盘** - 完整的五子棋棋盘
+- **双人对战** - 单机双人对战，黑棋先手
+- **智能胜负判断** - 支持横向、纵向、左斜、右斜五子连线获胜判断
+- **游戏保护** - 已有棋子的位置不能重复落子，获胜后禁止继续落子
+- **重新开始** - 支持随时重置游戏
+- **现代 UI** - 玻璃态设计，渐变背景
 
-## React Compiler
+## 技术栈
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| 技术 | 说明 |
+|------|------|
+| React 19 | 前端框架 |
+| TypeScript | 类型安全 |
+| Vite | 构建工具 |
+| Vitest | 单元测试 |
 
-## Expanding the ESLint configuration
+## 项目结构
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── game/                      # 游戏核心逻辑（纯函数，无 React 依赖）
+│   ├── types.ts              # 类型定义
+│   ├── gameLogic.ts         # 落子、胜负判断
+│   ├── gameReducer.ts       # 状态管理
+│   └── gameLogic.test.ts    # 单元测试
+├── components/               # React UI 组件
+│   ├── Cell.tsx            # 单个交叉点
+│   ├── Board.tsx          # 棋盘组件
+│   ├── Status.tsx         # 状态显示
+│   └── Game.tsx           # 游戏主容器
+├── App.tsx                  # 应用入口
+├── App.css                  # 样式
+└── test/
+    └── setup.ts             # 测试配置
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 快速开始
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 安装依赖
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### 开发模式
+
+```bash
+npm run dev
+```
+
+访问 http://localhost:5173 查看游戏。
+
+### 运行测试
+
+```bash
+npm run test
+```
+
+### 类型检查
+
+```bash
+npx tsc --noEmit
+```
+
+### 构建生产版本
+
+```bash
+npm run build
+```
+
+## 测试覆盖
+
+游戏核心逻辑完全通过单元测试覆盖：
+
+- ✅ 横向五子胜利判断
+- ✅ 纵向五子胜利判断
+- ✅ 左斜五子胜利判断
+- ✅ 右斜五子胜利判断
+- ✅ 非法落子拒绝（已有棋子位置）
+- ✅ 获胜后禁止继续落子
+- ✅ 重置游戏功能
+
+## 游戏规则
+
+1. **落子** - 点击棋盘空白交叉点放置棋子
+2. **回合** - 黑棋先手，双方交替落子
+3. **胜利** - 横/竖/左斜/右斜方向形成五子连线获胜
+4. **结束** - 产生获胜者后游戏结束，显示重新开始按钮
+
+## 后续扩展
+
+- [ ] 禁手规则（长连禁手，双三禁手等）
+- [ ] 人机 AI（简单 AI 或 Monte Carlo Tree Search）
+- [ ] 联机对战（WebSocket / WebRTC）
+- [ ] 五连高亮（获胜时高亮显示连线）
+- [ ] 悔棋功能
+
+## License
+
+MIT
