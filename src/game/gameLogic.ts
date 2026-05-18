@@ -16,14 +16,14 @@ export function canPlacePiece(board: Board, row: number, col: number): boolean {
 export function checkWin(board: Board, row: number, col: number, player: Player): boolean {
   // Check horizontal (left-right)
   let count = 1
-  // Left
-  for (let c = col - 1; c >= 0 && board[row][c] === player; c--) {
-    count++
-  }
-  // Right
-  for (let c = col + 1; c < BOARD_SIZE && board[row][c] === player; c++) {
-    count++
-  }
+  for (let c = col - 1; c >= 0 && board[row][c] === player; c--) count++
+  for (let c = col + 1; c < BOARD_SIZE && board[row][c] === player; c++) count++
+  if (count >= 5) return true
+
+  // Check vertical (up-down)
+  count = 1
+  for (let r = row - 1; r >= 0 && board[r][col] === player; r--) count++
+  for (let r = row + 1; r < BOARD_SIZE && board[r][col] === player; r++) count++
   if (count >= 5) return true
 
   return false
