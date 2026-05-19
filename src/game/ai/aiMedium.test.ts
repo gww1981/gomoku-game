@@ -7,7 +7,7 @@ describe('aiMedium', () => {
     const board = createEmptyBoard()
     const move = getAIMove(board, 'black')
     expect(move).not.toBeNull()
-    expect(move.score).toBeGreaterThan(0)
+    expect(move!.score).toBeGreaterThan(0)
   })
 
   it('应在有威胁时识别并防御', () => {

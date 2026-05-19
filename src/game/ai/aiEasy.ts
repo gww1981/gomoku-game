@@ -3,6 +3,8 @@ import type { AIDecision } from './types'
 import { BOARD_SIZE } from '../gameLogic'
 
 export function getAIMove(board: Board, player: Player): AIDecision | null {
+  void player
+
   const emptyPositions: Array<{ row: number; col: number }> = []
 
   for (let row = 0; row < BOARD_SIZE; row++) {

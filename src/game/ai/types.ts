@@ -1,5 +1,3 @@
-import type { Board, Player } from '../types'
-
 /** 棋型评分 */
 export type PatternType =
   | 'block_live_three'   // 阻挡活三

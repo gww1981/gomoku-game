@@ -1,5 +1,6 @@
 import type { Board, Player } from '../types'
-import type { AIDifficulty, AIDecision } from './types'
+import type { AIDifficulty } from '../types'
+import type { AIDecision } from './types'
 import { getAIMove as getEasyMove } from './aiEasy'
 import { getAIMove as getMediumMove } from './aiMedium'
 import { getAIMove as getHardMove } from './aiHard'
@@ -21,4 +22,5 @@ export function getAIMove(
   }
 }
 
-export type { AIDifficulty, AIDecision } from './types'
+export type { AIDifficulty } from '../types'
+export type { AIDecision } from './types'

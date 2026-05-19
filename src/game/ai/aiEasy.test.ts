@@ -7,10 +7,10 @@ describe('aiEasy', () => {
     const board = createEmptyBoard()
     const move = getAIMove(board, 'black')
     expect(move).not.toBeNull()
-    expect(move.row).toBeGreaterThanOrEqual(0)
-    expect(move.row).toBeLessThan(15)
-    expect(move.col).toBeGreaterThanOrEqual(0)
-    expect(move.col).toBeLessThan(15)
+    expect(move!.row).toBeGreaterThanOrEqual(0)
+    expect(move!.row).toBeLessThan(15)
+    expect(move!.col).toBeGreaterThanOrEqual(0)
+    expect(move!.col).toBeLessThan(15)
   })
 
   it('应在部分填充的棋盘上返回空位', () => {
