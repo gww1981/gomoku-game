@@ -11,6 +11,7 @@ export interface GameState {
   status: GameStatus
   winner: Player | null
   lastMove: Position | null
+  winningCells: Position[]
   settings: GameSettings
   isAIThinking: boolean
 }
