@@ -1,7 +1,7 @@
 import { useReducer, useEffect, useCallback, useState } from 'react'
 import { gameReducer, getInitialGameState } from '../game/gameReducer'
 import { getAIMove } from '../game/ai'
-import type { GameMode, AIDifficulty, Player } from '../game/types'
+import type { GameMode, AIDifficulty } from '../game/types'
 import { Board } from './Board'
 import { Status } from './Status'
 import { ModeSelect } from './ModeSelect'

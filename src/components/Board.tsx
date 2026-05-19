@@ -1,4 +1,4 @@
-import type { Board, Player } from '../game/types'
+import type { Board } from '../game/types'
 import { Cell } from './Cell'
 
 interface BoardProps {
