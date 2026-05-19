@@ -13,7 +13,7 @@
 ## File Structure
 
 - Modify `src/components/Game.tsx`: remove the `gameStarted` gate, render the dashboard layout at all times, pass current settings into `ModeSelect`, and keep AI/move logic unchanged.
-- Modify `src/components/ModeSelect.tsx`: change the component API to receive current mode/difficulty and render compact toolbar buttons with `aria-pressed`.
+- Modify `src/components/ModeSelect.tsx`: change the component API to receive current mode/difficulty and render two compact segmented controls: `双人` / `AI 对战`, then AI difficulty `简单` / `中等` / `困难`, with `aria-pressed`.
 - Modify `src/components/Status.tsx`: replace mojibake copy with readable Chinese strings and keep the existing status branching.
 - Modify `src/components/Cell.tsx`: add `role="button"` and `aria-label` so tests and assistive tech can identify board cells.
 - Modify `src/App.css`: replace the full-screen stacked layout with the board-centered dashboard, toolbar, state panel, responsive board sizing, and button states.
@@ -44,23 +44,35 @@ describe('Game dashboard', () => {
     const { container } = render(<Game />)
 
     expect(screen.getByRole('heading', { name: '五子棋' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '双人对战' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'AI 简单' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'AI 中等' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'AI 困难' })).toBeInTheDocument()
-    expect(screen.getByText('双人对战')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '双人' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'AI 对战' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: '简单' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '中等' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '困难' })).toBeDisabled()
+    expect(screen.getAllByText('双人')).toHaveLength(2)
     expect(screen.getByText('黑棋回合')).toBeInTheDocument()
     expect(getCells(container)).toHaveLength(225)
   })
 
-  it('switches to AI medium without hiding the board', () => {
+  it('switches to AI mode with medium difficulty by default', () => {
     const { container } = render(<Game />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'AI 中等' }))
+    fireEvent.click(screen.getByRole('button', { name: 'AI 对战' }))
 
-    expect(screen.getByRole('button', { name: 'AI 中等' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'AI 对战' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '中等' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByText('人机对战 · 中等')).toBeInTheDocument()
     expect(getCells(container)).toHaveLength(225)
+  })
+
+  it('lets the player choose hard difficulty after choosing AI mode', () => {
+    render(<Game />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'AI 对战' }))
+    fireEvent.click(screen.getByRole('button', { name: '困难' }))
+
+    expect(screen.getByRole('button', { name: '困难' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('人机对战 · 困难')).toBeInTheDocument()
   })
 
   it('resets the board when the player changes mode', () => {
@@ -70,9 +82,9 @@ describe('Game dashboard', () => {
     fireEvent.click(cells[0])
     expect(cells[0]).toHaveAttribute('data-piece', 'black')
 
-    fireEvent.click(screen.getByRole('button', { name: 'AI 困难' }))
+    fireEvent.click(screen.getByRole('button', { name: 'AI 对战' }))
 
-    expect(screen.getByText('人机对战 · 困难')).toBeInTheDocument()
+    expect(screen.getByText('人机对战 · 中等')).toBeInTheDocument()
     expect(cells[0]).toHaveAttribute('data-piece', '')
   })
 })
@@ -86,7 +98,7 @@ Run:
 npm test -- --run src/components/Game.test.tsx
 ```
 
-Expected: FAIL because `Game` still renders the full-screen `ModeSelect` before the board, `ModeSelect` does not expose `aria-pressed`, and `Cell` does not yet provide accessible labels.
+Expected: FAIL because `Game` still renders the full-screen `ModeSelect` before the board, `ModeSelect` does not expose the two-level mode/difficulty controls, and `Cell` does not yet provide accessible labels.
 
 - [ ] **Step 3: Commit the failing tests**
 
@@ -117,33 +129,47 @@ interface ModeSelectProps {
 }
 
 const difficultyOptions: Array<{ difficulty: AIDifficulty; label: string }> = [
-  { difficulty: 'easy', label: 'AI 简单' },
-  { difficulty: 'medium', label: 'AI 中等' },
-  { difficulty: 'hard', label: 'AI 困难' },
+  { difficulty: 'easy', label: '简单' },
+  { difficulty: 'medium', label: '中等' },
+  { difficulty: 'hard', label: '困难' },
 ]
 
 export function ModeSelect({ mode, aiDifficulty, onSelect }: ModeSelectProps) {
   return (
-    <div className="mode-toolbar" aria-label="对局模式">
-      <button
-        type="button"
-        className="mode-choice"
-        aria-pressed={mode === 'pvp'}
-        onClick={() => onSelect('pvp')}
-      >
-        双人对战
-      </button>
-      {difficultyOptions.map(option => (
+    <div className="mode-toolbar" aria-label="对局设置">
+      <div className="mode-group" aria-label="对局模式">
         <button
-          key={option.difficulty}
           type="button"
           className="mode-choice"
-          aria-pressed={mode === 'ai' && aiDifficulty === option.difficulty}
-          onClick={() => onSelect('ai', option.difficulty)}
+          aria-pressed={mode === 'pvp'}
+          onClick={() => onSelect('pvp')}
         >
-          {option.label}
+          双人
         </button>
-      ))}
+        <button
+          type="button"
+          className="mode-choice"
+          aria-pressed={mode === 'ai'}
+          onClick={() => onSelect('ai', aiDifficulty)}
+        >
+          AI 对战
+        </button>
+      </div>
+
+      <div className="mode-group" aria-label="AI 难度">
+        {difficultyOptions.map(option => (
+          <button
+            key={option.difficulty}
+            type="button"
+            className="mode-choice difficulty-choice"
+            aria-pressed={aiDifficulty === option.difficulty}
+            disabled={mode !== 'ai'}
+            onClick={() => onSelect('ai', option.difficulty)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -208,7 +234,7 @@ export function Game() {
   }, [])
 
   const modeLabel = state.settings.mode === 'pvp'
-    ? '双人对战'
+    ? '双人'
     : `人机对战 · ${difficultyText[state.settings.aiDifficulty]}`
 
   return (
@@ -470,6 +496,12 @@ Replace `src/App.css` with the dashboard, board, status, responsive, and animati
   gap: 8px;
 }
 
+.mode-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .mode-choice {
   min-height: 38px;
   padding: 0 14px;
@@ -493,6 +525,12 @@ Replace `src/App.css` with the dashboard, board, status, responsive, and animati
   background: var(--accent-gold);
   border-color: var(--accent-gold-bright);
   box-shadow: 0 8px 22px rgba(201, 168, 108, 0.18);
+}
+
+.mode-choice:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+  transform: none;
 }
 
 .board-stage {
@@ -807,7 +845,8 @@ Expected:
 
 In the browser:
 - Click one empty cell. Expected: a black piece appears and the status changes to white turn in PVP mode.
-- Click `AI 中等`. Expected: board clears, mode badge reads `人机对战 · 中等`, and black can move first.
+- Click `AI 对战`. Expected: board clears, mode badge reads `人机对战 · 中等`, and black can move first.
+- Click `困难`. Expected: board clears again, mode badge reads `人机对战 · 困难`, and the hard difficulty button is selected.
 - Click a cell in AI mode. Expected: black piece appears, AI thinking status appears briefly, then white AI move appears.
 
 - [ ] **Step 5: Apply focused CSS fixes if needed**
@@ -857,6 +896,6 @@ If Step 5 did not change files, do not create an empty commit.
 
 ## Self-Review
 
-- Spec coverage: Tasks 1-4 cover simultaneous board/homepage rendering, compact mode selection, current mode state, mode-change reset, status copy, responsive layout, browser verification, tests, and build.
+- Spec coverage: Tasks 1-4 cover simultaneous board/homepage rendering, two-level mode and AI difficulty selection, default medium difficulty, current mode state, mode-change reset, status copy, responsive layout, browser verification, tests, and build.
 - Deferred-work scan: This plan contains no deferred work markers; every implementation step lists exact files, code, commands, and expected outcomes.
 - Type consistency: `GameMode`, `AIDifficulty`, `mode`, `aiDifficulty`, `SET_MODE`, and `data-piece` match the existing reducer and component contracts.
