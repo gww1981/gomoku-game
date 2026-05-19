@@ -189,3 +189,87 @@
     font-size: 1.75rem;
   }
 }
+
+/* ========== 动效关键帧 ========== */
+
+/* 棋子落下弹跳动画 */
+@keyframes pieceDrop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  80% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.piece {
+  animation: pieceDrop 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 最后落子金色光晕 */
+@keyframes lastMoveGlow {
+  0%, 100% {
+    box-shadow:
+      inset 2px 2px 4px rgba(255,255,255,0.1),
+      inset -2px -2px 4px rgba(0,0,0,0.3),
+      0 0 0 3px rgba(201, 168, 108, 0.3);
+  }
+  50% {
+    box-shadow:
+      inset 2px 2px 4px rgba(255,255,255,0.1),
+      inset -2px -2px 4px rgba(0,0,0,0.3),
+      0 0 0 5px rgba(201, 168, 108, 0.6);
+  }
+}
+
+.cell.last-move .piece {
+  animation: lastMoveGlow 1.5s ease-in-out infinite, pieceDrop 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* AI 思考光晕 */
+@keyframes aiThinking {
+  0%, 100% {
+    box-shadow:
+      inset 2px 2px 4px rgba(255,255,255,0.1),
+      inset -2px -2px 4px rgba(0,0,0,0.3),
+      0 0 10px rgba(255, 215, 0, 0.2);
+  }
+  50% {
+    box-shadow:
+      inset 2px 2px 4px rgba(255,255,255,0.1),
+      inset -2px -2px 4px rgba(0,0,0,0.3),
+      0 0 20px rgba(255, 215, 0, 0.5);
+  }
+}
+
+.cell.ai-thinking .piece {
+  animation: aiThinking 1.2s ease-in-out infinite;
+}
+
+/* 胜利连线闪烁 */
+@keyframes winPulse {
+  0%, 100% {
+    box-shadow:
+      inset 2px 2px 4px rgba(255,255,255,0.1),
+      inset -2px -2px 4px rgba(0,0,0,0.3),
+      0 0 8px rgba(255, 215, 0, 0.8);
+  }
+  50% {
+    box-shadow:
+      inset 2px 2px 4px rgba(255,255,255,0.1),
+      inset -2px -2px 4px rgba(0,0,0,0.3),
+      0 0 16px rgba(255, 215, 0, 1);
+  }
+}
+
+.cell.winning .piece {
+  animation: winPulse 0.8s ease-in-out infinite;
+}
