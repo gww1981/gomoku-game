@@ -401,13 +401,22 @@
 
 @media (max-width: 420px) {
   .game-shell {
-    padding: 12px;
+    padding: 8px;
   }
 
   .game-header,
-  .board-stage,
   .game-footer {
     padding: 12px;
+  }
+
+  .board-stage {
+    padding: 8px;
+  }
+
+  .board {
+    --cell-size: clamp(16px, 5vw, 36px);
+
+    padding: 8px;
   }
 
   .mode-toolbar,
