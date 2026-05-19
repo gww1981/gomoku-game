@@ -399,7 +399,7 @@
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 480px) {
   .game-shell {
     padding: 8px;
   }
