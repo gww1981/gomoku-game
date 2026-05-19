@@ -66,7 +66,12 @@ export function Game() {
         </span>
       </div>
       <Status gameState={state} />
-      <Board board={state.board} onCellClick={handleCellClick} />
+      <Board
+        board={state.board}
+        onCellClick={handleCellClick}
+        lastMove={state.lastMove}
+        winningCells={state.winningCells || []}
+      />
       {state.status !== 'playing' && (
         <button className="reset-button" onClick={handleReset}>
           重新开始
