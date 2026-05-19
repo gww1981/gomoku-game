@@ -36,6 +36,13 @@ export function Game() {
     if (state.isAIThinking) return
 
     dispatch({ type: 'SET_AI_THINKING', isThinking: true })
+  }, [state.status, state.settings.mode, state.currentPlayer, state.isAIThinking])
+
+  useEffect(() => {
+    if (state.status !== 'playing') return
+    if (state.settings.mode !== 'ai') return
+    if (state.currentPlayer !== 'white') return
+    if (!state.isAIThinking) return
 
     const timeoutId = setTimeout(() => {
       const decision = getAIMove(state.board, 'white', state.settings.aiDifficulty)
@@ -45,7 +52,14 @@ export function Game() {
     }, AI_THINKING_DELAY)
 
     return () => clearTimeout(timeoutId)
-  }, [state.status, state.settings, state.currentPlayer, state.isAIThinking, state.board])
+  }, [
+    state.status,
+    state.settings.mode,
+    state.settings.aiDifficulty,
+    state.currentPlayer,
+    state.isAIThinking,
+    state.board,
+  ])
 
   const handleReset = useCallback(() => {
     dispatch({ type: 'RESET' })

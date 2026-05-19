@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { Game } from './Game'
 
 function getCells(container: HTMLElement) {
@@ -53,5 +53,36 @@ describe('Game dashboard', () => {
 
     expect(screen.getByText('人机对战 · 中等')).toBeInTheDocument()
     expect(resetCells[0]).toHaveAttribute('data-piece', '')
+  })
+
+  it('lets the AI place a white piece after the thinking delay', () => {
+    vi.useFakeTimers()
+
+    try {
+      const { container } = render(<Game />)
+
+      fireEvent.click(screen.getByRole('button', { name: 'AI 对战' }))
+      fireEvent.click(getCells(container)[0])
+
+      expect(screen.getByText(/AI 正在思考/)).toBeInTheDocument()
+
+      act(() => {
+        vi.advanceTimersByTime(400)
+      })
+
+      expect(container.querySelectorAll('.cell[data-piece="white"]')).toHaveLength(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('places a black piece when an empty cell is activated with Enter', () => {
+    const { container } = render(<Game />)
+    const firstCell = getCells(container)[0]
+
+    firstCell.focus()
+    fireEvent.keyDown(firstCell, { key: 'Enter', code: 'Enter' })
+
+    expect(firstCell).toHaveAttribute('data-piece', 'black')
   })
 })
