@@ -1,12 +1,11 @@
 import type { Board, Player } from '../types'
 import type { AIDecision } from './types'
-import { BOARD_SIZE, canPlacePiece, checkWin } from '../gameLogic'
+import { BOARD_SIZE, checkWin } from '../gameLogic'
 import { getAIMove as getMediumMove } from './aiMedium'
 
 const MAX_DEPTH = 3
 
 function evaluateBoard(board: Board, aiPlayer: Player): number {
-  const opponent = aiPlayer === 'black' ? 'white' : 'black'
   let score = 0
 
   for (let row = 0; row < BOARD_SIZE; row++) {

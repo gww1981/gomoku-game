@@ -8,7 +8,7 @@ export function Status({ gameState }: StatusProps) {
   if (gameState.status === 'won') {
     return (
       <div className="status won">
-        {gameState.winner === 'black' ? '黑棋' : '白棋'} 获胜!
+        {gameState.winner === 'black' ? '黑棋获胜!' : '白棋获胜!'}
       </div>
     )
   }
@@ -23,10 +23,13 @@ export function Status({ gameState }: StatusProps) {
   }
 
   const isAITurn = gameState.settings.mode === 'ai' && gameState.currentPlayer === 'white'
+  const turnLabel = isAITurn
+    ? '白棋 (AI)回合'
+    : `${gameState.currentPlayer === 'black' ? '黑棋' : '白棋'}回合`
 
   return (
     <div className="status">
-      {isAITurn ? '白棋 (AI)' : (gameState.currentPlayer === 'black' ? '黑棋' : '白棋')} 回合
+      {turnLabel}
     </div>
   )
 }

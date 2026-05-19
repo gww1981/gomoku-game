@@ -1,28 +1,49 @@
 import type { GameMode, AIDifficulty } from '../game/types'
 
 interface ModeSelectProps {
+  mode: GameMode
+  aiDifficulty: AIDifficulty
   onSelect: (mode: GameMode, aiDifficulty?: AIDifficulty) => void
 }
 
-export function ModeSelect({ onSelect }: ModeSelectProps) {
+const difficultyOptions: Array<{ difficulty: AIDifficulty; label: string }> = [
+  { difficulty: 'easy', label: '简单' },
+  { difficulty: 'medium', label: '中等' },
+  { difficulty: 'hard', label: '困难' },
+]
+
+export function ModeSelect({ mode, aiDifficulty, onSelect }: ModeSelectProps) {
   return (
-    <div className="mode-select">
-      <h1>五子棋</h1>
-      <div className="mode-buttons">
+    <div className="mode-toolbar">
+      <div className="mode-group">
         <button
-          className="mode-button pvp"
+          type="button"
+          aria-pressed={mode === 'pvp'}
           onClick={() => onSelect('pvp')}
         >
-          双人对战
+          双人
         </button>
-        <div className="ai-modes">
-          <span className="ai-label">人机对战</span>
-          <div className="ai-difficulty-buttons">
-            <button onClick={() => onSelect('ai', 'easy')}>简单</button>
-            <button className="primary" onClick={() => onSelect('ai', 'medium')}>中等</button>
-            <button onClick={() => onSelect('ai', 'hard')}>困难</button>
-          </div>
-        </div>
+        <button
+          type="button"
+          aria-pressed={mode === 'ai'}
+          onClick={() => onSelect('ai', aiDifficulty)}
+        >
+          AI 对战
+        </button>
+      </div>
+      <div className="mode-group">
+        {difficultyOptions.map((option) => (
+          <button
+            key={option.difficulty}
+            type="button"
+            className="difficulty-choice"
+            aria-pressed={aiDifficulty === option.difficulty}
+            disabled={mode !== 'ai'}
+            onClick={() => onSelect('ai', option.difficulty)}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import type { GameState, GameAction, Player, GameMode, AIDifficulty, Position } from './types'
+import type { GameState, GameAction, Player, Position } from './types'
 import { createEmptyBoard, canPlacePiece, checkWin, BOARD_SIZE } from './gameLogic'
 
 function getWinningCells(board: (Player | null)[][], row: number, col: number, player: Player): Position[] {
