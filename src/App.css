@@ -17,6 +17,7 @@
   align-items: end;
   justify-content: space-between;
   gap: 20px;
+  min-width: 0;
   padding: clamp(16px, 2.6vw, 24px);
   border: 1px solid var(--panel-line);
   border-radius: 8px;
@@ -56,12 +57,14 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
+  min-width: 0;
 }
 
 .mode-group {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
 
 .mode-group button,
@@ -386,6 +389,35 @@
 
   .mode-toolbar {
     justify-content: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mode-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mode-group:last-child {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mode-group button,
+  .mode-choice,
+  .difficulty-choice {
+    min-width: 0;
+    width: 100%;
+    padding-inline: 8px;
+  }
+
+  .board {
+    --cell-size: clamp(16px, 5vw, 36px);
+
+    padding: 8px;
   }
 
   .game-footer {
@@ -419,25 +451,4 @@
     padding: 8px;
   }
 
-  .mode-toolbar,
-  .mode-group {
-    width: 100%;
-  }
-
-  .mode-group {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .mode-group button,
-  .mode-choice,
-  .difficulty-choice {
-    min-width: 0;
-    width: 100%;
-    padding-inline: 8px;
-  }
-
-  .mode-group:last-child {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
