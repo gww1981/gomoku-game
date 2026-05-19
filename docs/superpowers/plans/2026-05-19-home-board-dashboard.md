@@ -503,7 +503,7 @@ Replace `src/App.css` with the dashboard, board, status, responsive, and animati
 }
 
 .mode-choice {
-  min-height: 38px;
+  min-height: 44px;
   padding: 0 14px;
   color: var(--text-secondary);
   background: rgba(232, 220, 200, 0.07);
@@ -604,7 +604,7 @@ Replace `src/App.css` with the dashboard, board, status, responsive, and animati
 }
 
 .game-footer {
-  min-height: 72px;
+  min-height: 76px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -618,7 +618,7 @@ Replace `src/App.css` with the dashboard, board, status, responsive, and animati
 
 .mode-badge,
 .status {
-  min-height: 38px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -647,7 +647,7 @@ Replace `src/App.css` with the dashboard, board, status, responsive, and animati
 }
 
 .reset-button {
-  min-height: 38px;
+  min-height: 44px;
   padding: 0 20px;
   color: #1a1510;
   background: var(--accent-gold);
@@ -828,7 +828,8 @@ Open the local URL at a desktop viewport around `1280x800`.
 Expected:
 - Header, mode toolbar, board, mode badge, and status are visible in the first viewport.
 - Board is centered and visually dominant.
-- Mode toolbar buttons do not wrap on desktop.
+- Mode toolbar buttons do not wrap on desktop at `1280px` width.
+- Mode and difficulty buttons keep at least `44px` height.
 - No text overlaps or spills out of buttons.
 
 - [ ] **Step 3: Verify mobile layout in browser**
@@ -840,6 +841,7 @@ Expected:
 - Mode buttons wrap into two rows without clipping text.
 - Board fits horizontally with no page-level horizontal scroll.
 - Status and mode badge remain readable below the board.
+- Difficulty buttons are disabled in PVP mode, enabled after choosing AI mode, and remain easy to tap.
 
 - [ ] **Step 4: Verify key interactions**
 
@@ -896,6 +898,6 @@ If Step 5 did not change files, do not create an empty commit.
 
 ## Self-Review
 
-- Spec coverage: Tasks 1-4 cover simultaneous board/homepage rendering, two-level mode and AI difficulty selection, default medium difficulty, current mode state, mode-change reset, status copy, responsive layout, browser verification, tests, and build.
+- Spec coverage: Tasks 1-4 cover simultaneous board/homepage rendering, two-level mode and AI difficulty selection, default medium difficulty, current mode state, mode-change reset, status copy, market-standard responsive layout, 44px tap targets, browser verification, tests, and build.
 - Deferred-work scan: This plan contains no deferred work markers; every implementation step lists exact files, code, commands, and expected outcomes.
 - Type consistency: `GameMode`, `AIDifficulty`, `mode`, `aiDifficulty`, `SET_MODE`, and `data-piece` match the existing reducer and component contracts.
