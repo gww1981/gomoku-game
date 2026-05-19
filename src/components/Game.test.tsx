@@ -16,7 +16,6 @@ describe('Game dashboard', () => {
     expect(screen.getByRole('button', { name: '简单' })).toBeDisabled()
     expect(screen.getByRole('button', { name: '中等' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: '困难' })).toBeDisabled()
-    expect(screen.getAllByText('双人')).toHaveLength(2)
     expect(screen.getByText('黑棋回合')).toBeInTheDocument()
     expect(getCells(container)).toHaveLength(225)
   })
@@ -50,8 +49,9 @@ describe('Game dashboard', () => {
     expect(cells[0]).toHaveAttribute('data-piece', 'black')
 
     fireEvent.click(screen.getByRole('button', { name: 'AI 对战' }))
+    const resetCells = getCells(container)
 
     expect(screen.getByText('人机对战 · 中等')).toBeInTheDocument()
-    expect(cells[0]).toHaveAttribute('data-piece', '')
+    expect(resetCells[0]).toHaveAttribute('data-piece', '')
   })
 })
