@@ -5,51 +5,32 @@ import type { ReactNode } from 'react'
 import { AudioProvider } from './AudioContext'
 import { useAudio } from './useAudio'
 
-function createMockAudioElement() {
-  const audio = {
-    play: vi.fn(async () => {}),
-    pause: vi.fn(),
-    volume: 0.5,
-    muted: false,
-    loop: false,
-    src: '',
-  } as unknown as HTMLAudioElement
-  return audio
+function createMockAudioContext() {
+  return class MockAudioContext {
+    createGain = vi.fn(() => ({
+      gain: { value: 1, setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+    }))
+    createOscillator = vi.fn(() => ({
+      type: 'sine',
+      frequency: { value: 0 },
+      connect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+    }))
+    destination = Symbol('destination')
+    state: AudioContextState = 'running'
+    resume = vi.fn(async () => {})
+    close = vi.fn(async () => {})
+    currentTime = 0
+  }
 }
 
 describe('AudioProvider + useAudio', () => {
-  let mockAudio: HTMLAudioElement
-  let originalCreateElement: typeof document.createElement
-
   beforeEach(() => {
-    mockAudio = createMockAudioElement()
-    originalCreateElement = document.createElement.bind(document)
-    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
-      if (tag === 'audio') return mockAudio
-      return originalCreateElement(tag)
-    })
-    // jsdom 没有 AudioContext，用类 mock 使 new 调用生效
-    class MockAudioContext {
-      createGain = vi.fn(() => ({
-        gain: { value: 1 },
-        connect: vi.fn(),
-        disconnect: vi.fn(),
-      }))
-      createBufferSource = vi.fn(() => ({
-        buffer: null,
-        connect: vi.fn(),
-        start: vi.fn(),
-      }))
-      decodeAudioData = vi.fn(async () => ({ duration: 0.5 }))
-      destination = Symbol('destination')
-      state: AudioContextState = 'running'
-      resume = vi.fn(async () => {})
-      close = vi.fn(async () => {})
-    }
-    vi.stubGlobal('AudioContext', MockAudioContext)
-    vi.spyOn(window, 'fetch').mockResolvedValue({
-      arrayBuffer: async () => new ArrayBuffer(0),
-    } as Response)
+    vi.stubGlobal('AudioContext', createMockAudioContext())
+    vi.stubGlobal('AudioWorkletNode', class {})
   })
 
   afterEach(() => {
@@ -114,19 +95,5 @@ describe('AudioProvider + useAudio', () => {
 
     act(() => result.current.setSFXVolume(0.4))
     expect(result.current.sfxVolume).toBe(0.4)
-  })
-
-  it('静音时 BGM 暂停，取消静音时恢复', () => {
-    const { result } = renderHook(() => useAudio(), {
-      wrapper: ({ children }: { children: ReactNode }) => (
-        <AudioProvider>{children}</AudioProvider>
-      ),
-    })
-
-    act(() => result.current.toggleMute())
-    expect(mockAudio.pause).toHaveBeenCalled()
-
-    act(() => result.current.toggleMute())
-    expect(mockAudio.play).toHaveBeenCalled()
   })
 })

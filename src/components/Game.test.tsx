@@ -11,22 +11,37 @@ function renderGame() {
   return render(<AudioProvider><Game /></AudioProvider>)
 }
 
+function mockGainNode() {
+  return {
+    gain: { value: 1, setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+  }
+}
+
+function mockOscNode() {
+  return {
+    type: 'sine' as OscillatorType,
+    frequency: { value: 0 },
+    connect: vi.fn(),
+    start: vi.fn(),
+    stop: vi.fn(),
+  }
+}
+
 describe('Game dashboard', () => {
   beforeEach(() => {
+    const gain = mockGainNode()
+    const osc = mockOscNode()
     vi.stubGlobal('AudioContext', class MockAudioContext {
-      createGain() { return { gain: { value: 1, setValueAtTime: vi.fn() }, connect: vi.fn(), disconnect: vi.fn() } }
-      createBufferSource() { return { buffer: null, connect: vi.fn(), start: vi.fn() } }
-      decodeAudioData = vi.fn(async () => ({ duration: 0.5 }))
+      createGain = vi.fn(() => mockGainNode())
+      createOscillator = vi.fn(() => mockOscNode())
       destination = Symbol('destination')
       state: AudioContextState = 'running'
+      currentTime = 0
       resume = vi.fn(async () => {})
       close = vi.fn(async () => {})
     })
-    vi.spyOn(window, 'fetch').mockResolvedValue({
-      arrayBuffer: async () => new ArrayBuffer(0),
-    } as Response)
-    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
-    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
   })
 
   afterEach(() => {
