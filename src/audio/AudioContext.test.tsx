@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { AudioProvider, AudioCtx } from './AudioContext'
+import { AudioProvider } from './AudioContext'
 import { useAudio } from './useAudio'
 
 function createMockAudioElement() {
@@ -17,27 +17,6 @@ function createMockAudioElement() {
   return audio
 }
 
-function createMockAudioContext() {
-  const gainNode = {
-    gain: { value: 1 },
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-  }
-  return {
-    createGain: vi.fn(() => gainNode),
-    createBufferSource: vi.fn(() => ({
-      buffer: null,
-      connect: vi.fn(),
-      start: vi.fn(),
-    })),
-    decodeAudioData: vi.fn(async () => ({ duration: 0.5 })),
-    destination: Symbol('destination'),
-    state: 'running' as AudioContextState,
-    resume: vi.fn(async () => {}),
-    close: vi.fn(async () => {}),
-  } as unknown as AudioContext
-}
-
 describe('AudioProvider + useAudio', () => {
   let mockAudio: HTMLAudioElement
   let originalCreateElement: typeof document.createElement
@@ -50,7 +29,6 @@ describe('AudioProvider + useAudio', () => {
       return originalCreateElement(tag)
     })
     // jsdom 没有 AudioContext，用类 mock 使 new 调用生效
-    // eslint-disable-next-line @typescript-eslint/no-extraneous-class
     class MockAudioContext {
       createGain = vi.fn(() => ({
         gain: { value: 1 },

@@ -4,6 +4,7 @@ import { createSFXEngine } from './soundEffects'
 import { BGM_URL } from './types'
 import type { AudioContextValue, SFXName } from './types'
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AudioCtx = createContext<AudioContextValue | null>(null)
 
 export function AudioProvider({ children }: { children: ReactNode }) {
