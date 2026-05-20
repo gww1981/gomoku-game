@@ -1,10 +1,13 @@
-import { useReducer, useEffect, useCallback } from 'react'
+// src/components/Game.tsx
+import { useReducer, useEffect, useCallback, useRef } from 'react'
 import { gameReducer, getInitialGameState } from '../game/gameReducer'
 import { getAIMove } from '../game/ai'
 import type { GameMode, AIDifficulty } from '../game/types'
 import { Board } from './Board'
 import { Status } from './Status'
 import { ModeSelect } from './ModeSelect'
+import { AudioPanel } from './AudioPanel'
+import { useAudio } from '../audio/useAudio'
 
 const AI_THINKING_DELAY = 400
 
@@ -16,10 +19,14 @@ const difficultyText: Record<AIDifficulty, string> = {
 
 export function Game() {
   const [state, dispatch] = useReducer(gameReducer, getInitialGameState())
+  const audio = useAudio()
+  const prevStatusRef = useRef(state.status)
+  const prevAIThinkingRef = useRef(state.isAIThinking)
 
   const handleModeSelect = useCallback((mode: GameMode, aiDifficulty?: AIDifficulty) => {
     dispatch({ type: 'SET_MODE', mode, aiDifficulty })
-  }, [])
+    audio.playSFX('click')
+  }, [audio])
 
   const handleCellClick = useCallback((row: number, col: number) => {
     if (state.status !== 'playing') return
@@ -27,7 +34,8 @@ export function Game() {
     if (state.settings.mode === 'ai' && state.currentPlayer !== 'black') return
 
     dispatch({ type: 'MOVE', row, col })
-  }, [state.status, state.isAIThinking, state.settings.mode, state.currentPlayer])
+    audio.playSFX('move')
+  }, [state.status, state.isAIThinking, state.settings.mode, state.currentPlayer, audio])
 
   useEffect(() => {
     if (state.status !== 'playing') return
@@ -48,6 +56,7 @@ export function Game() {
       const decision = getAIMove(state.board, 'white', state.settings.aiDifficulty)
       if (decision) {
         dispatch({ type: 'AI_MOVE', row: decision.row, col: decision.col })
+        audio.playSFX('move')
       }
     }, AI_THINKING_DELAY)
 
@@ -59,11 +68,35 @@ export function Game() {
     state.currentPlayer,
     state.isAIThinking,
     state.board,
+    audio,
   ])
+
+  useEffect(() => {
+    if (prevStatusRef.current === 'playing' && state.status === 'won') {
+      audio.playSFX('win')
+    } else if (prevStatusRef.current === 'playing' && state.status === 'draw') {
+      audio.playSFX('draw')
+    }
+    prevStatusRef.current = state.status
+  }, [state.status, audio])
+
+  useEffect(() => {
+    if (!prevAIThinkingRef.current && state.isAIThinking) {
+      audio.playSFX('thinking')
+    }
+    prevAIThinkingRef.current = state.isAIThinking
+  }, [state.isAIThinking, audio])
+
+  useEffect(() => {
+    if (state.status === 'playing') {
+      audio.resumeBGM()
+    }
+  }, [state.status, audio])
 
   const handleReset = useCallback(() => {
     dispatch({ type: 'RESET' })
-  }, [])
+    audio.playSFX('click')
+  }, [audio])
 
   const modeLabel = state.settings.mode === 'pvp'
     ? '双人'
@@ -101,6 +134,7 @@ export function Game() {
           )}
         </footer>
       </section>
+      <AudioPanel />
     </main>
   )
 }
