@@ -29,10 +29,11 @@ interface BGMTrack {
 
 ### 自定义曲目
 
+- 自定义曲目 ID 固定为 `'custom'`
 - 用户通过文件选择器选择本地音频文件
 - 用 `URL.createObjectURL()` 生成临时 URL
-- 单文件模式，选择新文件自动替换旧的
-- 页面刷新后丢失（浏览器安全限制）
+- 单文件模式，选择新文件自动替换旧的（更新 customTrack.source）
+- 页面刷新后丢失（浏览器安全限制），恢复时回退到 synthetic
 
 ### AudioState 扩展
 
