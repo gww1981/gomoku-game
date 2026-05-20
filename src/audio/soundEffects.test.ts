@@ -35,6 +35,13 @@ describe('createSFXEngine', () => {
 
   beforeEach(() => {
     mockCtx = createMockAudioContext()
+    vi.spyOn(window, 'fetch').mockResolvedValue({
+      arrayBuffer: async () => new ArrayBuffer(0),
+    } as Response)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('preload 从 CDN URL 加载所有音效到缓存', async () => {

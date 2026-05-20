@@ -90,6 +90,8 @@ export function Game() {
   useEffect(() => {
     if (state.status === 'playing') {
       audio.resumeBGM()
+    } else {
+      audio.stopBGM()
     }
   }, [state.status, audio])
 

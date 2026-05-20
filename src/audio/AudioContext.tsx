@@ -16,6 +16,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const sfxEngineRef = useRef<ReturnType<typeof createSFXEngine> | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const initializedRef = useRef(false)
+  const mutedRef = useRef(false)
+  const sfxVolumeRef = useRef(0.7)
 
   const initAudio = useCallback(() => {
     if (initializedRef.current) return
@@ -30,6 +32,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     const ctx = new AudioContext()
     audioCtxRef.current = ctx
     sfxEngineRef.current = createSFXEngine(ctx)
+    sfxEngineRef.current.setVolume(sfxVolumeRef.current)
     sfxEngineRef.current.preload().catch(() => {})
   }, [])
 
@@ -37,11 +40,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     initAudio()
 
     const handleFirstInteraction = () => {
-      if (audioRef.current && audioRef.current.paused) {
-        audioRef.current.play().catch(() => {})
-      }
       if (audioCtxRef.current?.state === 'suspended') {
         audioCtxRef.current.resume().catch(() => {})
+      }
+      if (audioRef.current && audioRef.current.paused && !mutedRef.current) {
+        audioRef.current.play().catch(() => {})
       }
       document.removeEventListener('click', handleFirstInteraction)
       document.removeEventListener('keydown', handleFirstInteraction)
@@ -59,12 +62,16 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const toggleMute = useCallback(() => {
     setMuted((prev) => {
       const next = !prev
+      mutedRef.current = next
       if (audioRef.current) {
         if (next) {
           audioRef.current.pause()
         } else {
           audioRef.current.play().catch(() => {})
         }
+      }
+      if (sfxEngineRef.current) {
+        sfxEngineRef.current.setVolume(next ? 0 : sfxVolumeRef.current)
       }
       return next
     })
@@ -81,18 +88,21 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const setSFXVolume = useCallback((v: number) => {
     const clamped = Math.max(0, Math.min(1, v))
     setSFXVolumeState(clamped)
+    sfxVolumeRef.current = clamped
     if (sfxEngineRef.current) {
-      sfxEngineRef.current.setVolume(muted ? 0 : clamped)
+      sfxEngineRef.current.setVolume(mutedRef.current ? 0 : clamped)
     }
-  }, [muted])
+  }, [])
 
   const playSFX = useCallback((name: SFXName) => {
+    if (mutedRef.current) return
     if (sfxEngineRef.current) {
       sfxEngineRef.current.playSFX(name)
     }
   }, [])
 
   const resumeBGM = useCallback(() => {
+    if (mutedRef.current) return
     if (audioRef.current) {
       audioRef.current.play().catch(() => {})
     }
@@ -105,10 +115,28 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    mutedRef.current = muted
+    sfxVolumeRef.current = sfxVolume
     if (sfxEngineRef.current) {
       sfxEngineRef.current.setVolume(muted ? 0 : sfxVolume)
     }
   }, [muted, sfxVolume])
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
+        audioRef.current = null
+      }
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {})
+        audioCtxRef.current = null
+      }
+      sfxEngineRef.current = null
+      initializedRef.current = false
+    }
+  }, [])
 
   const value: AudioContextValue = {
     bgmVolume,
