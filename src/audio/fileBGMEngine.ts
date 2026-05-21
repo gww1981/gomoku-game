@@ -20,7 +20,6 @@ export function createFileBGMEngine(audioCtx: AudioContext): FileBGMEngine {
     masterGain.gain.cancelScheduledValues(audioCtx.currentTime)
     masterGain.gain.setValueAtTime(masterGain.gain.value, audioCtx.currentTime)
     masterGain.gain.linearRampToValueAtTime(value, audioCtx.currentTime + FADE_SECONDS)
-    masterGain.gain.value = value
   }
 
   function stopSource() {
