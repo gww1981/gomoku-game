@@ -1,3 +1,9 @@
+@media (prefers-reduced-motion: reduce) {
+  .replay-bar {
+    animation: none;
+  }
+}
+
 .replay-bar {
   display: flex;
   flex-direction: column;
