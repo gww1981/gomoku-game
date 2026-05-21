@@ -1,6 +1,6 @@
 # 五子棋 Web 游戏
 
-基于 React + TypeScript + Vite 构建的现代化五子棋 Web 游戏，支持双人对战与 AI 对战，配备沉浸式音效系统。
+基于 React + TypeScript + Vite 构建的现代化五子棋 Web 游戏，支持双人对战与 AI 对战，配备沉浸式多曲目音效系统。
 
 ## 功能特性
 
@@ -8,8 +8,10 @@
 - **双人对战** — 单机双人对战，黑棋先手
 - **AI 对战** — 三档难度（简单/中等/困难），基于评分算法的 AI 对手
 - **智能胜负判断** — 横/纵/左斜/右斜四方向五子连线检测
-- **全功能音效系统** — 背景音乐 + 落子/胜利/平局/AI思考/UI点击音效
-- **音频控制面板** — 浮动面板，支持静音切换、BGM/SFX 音量独立调节
+- **多曲目背景音乐** — 4 首内置曲目（合成古风/山水/竹林/月下），支持自定义本地音频
+- **BGM 淡入淡出** — 曲目切换时平滑过渡，自定义音频加载状态与错误回退
+- **全功能音效系统** — 落子/胜利/平局/AI思考/UI点击音效
+- **音频控制面板** — 浮动面板，曲目选择、静音切换、BGM/SFX 音量独立调节
 - **浏览器 Autoplay 降级** — 自动处理浏览器音频播放限制
 - **游戏保护** — 不可重复落子，获胜后禁止继续
 - **五连高亮** — 获胜时高亮显示连线棋子
@@ -41,7 +43,11 @@ src/
 │       ├── aiMedium.ts       # 中等 AI
 │       └── aiHard.ts         # 困难 AI
 ├── audio/                     # 音效系统
-│   ├── types.ts              # 音频类型与 CDN URL 常量
+│   ├── types.ts              # 音频类型、BGMTrack 接口、曲目 ID 常量
+│   ├── bgmTracks.ts          # 内置曲目定义与 localStorage 恢复工具
+│   ├── bgmEngine.ts          # 合成 BGM 引擎（五声音阶旋律，Web Audio API）
+│   ├── fileBGMEngine.ts      # 文件 BGM 引擎（MP3 解码播放，淡入淡出）
+│   ├── bgmManager.ts         # BGM 管理器（统一调度、曲目切换、竞态防护）
 │   ├── soundEffects.ts       # SFX 播放引擎（Web Audio API）
 │   ├── AudioContext.tsx       # AudioProvider + Context
 │   └── useAudio.ts           # 自定义 Hook
@@ -51,13 +57,19 @@ src/
 │   ├── Status.tsx            # 状态显示
 │   ├── Game.tsx              # 游戏主容器
 │   ├── ModeSelect.tsx        # 模式选择工具栏
-│   ├── AudioPanel.tsx        # 音频控制浮动面板
+│   ├── AudioPanel.tsx        # 音频控制浮动面板（曲目选择/音量/自定义音频）
 │   └── AudioPanel.css        # 面板样式
 ├── App.tsx                   # 应用入口
 ├── App.css                   # 主样式
 ├── index.css                 # 全局样式与 CSS 变量
 └── test/
     └── setup.ts              # 测试配置
+public/
+└── audio/                     # 内置 BGM 音频资源
+    ├── shanshui.mp3           # 山水
+    ├── zhulin.mp3             # 竹林
+    ├── yuexia.mp3             # 月下
+    └── LICENSES.md            # 音频授权说明
 ```
 
 ## 快速开始
@@ -96,21 +108,32 @@ npm run build
 
 ## 音效系统
 
-音效系统采用 Context + useAudio Hook 架构，与游戏 reducer 完全解耦：
+音效系统采用 BGMManager + Context + useAudio Hook 架构，与游戏 reducer 完全解耦：
 
-- **背景音乐** — 通过 `<audio>` 元素播放，CDN 远程加载，循环播放
-- **音效** — 通过 Web Audio API 播放，预加载到 AudioBuffer 缓存池
-- **BGM 与 SFX 音量独立控制**，互不影响
-- **自动处理浏览器 Autoplay 限制** — 首次用户交互后自动恢复播放
-- 右下角浮动面板，默认收起，点击展开控制界面
+### 背景音乐（BGM）
+
+- **多曲目选择** — 4 首内置曲目：合成古风旋律、山水、竹林、月下
+- **双引擎架构** — 合成引擎（Web Audio API 振荡器实时合成）+ 文件引擎（MP3 解码播放）
+- **淡入淡出** — 曲目切换、开始/停止时 0.5s 平滑过渡
+- **自定义音频** — 支持加载本地音频文件（格式/大小校验，blob URL 生命周期管理）
+- **错误回退** — 网络加载失败自动回退到合成 BGM，UI 显示错误提示
+- **竞态防护** — 快速切换曲目时通过 requestId 机制丢弃过期异步结果
+- **持久化** — 当前曲目和音量保存到 localStorage，刷新后恢复
+
+### 音效（SFX）
+
+- 通过 Web Audio API 播放，预加载到 AudioBuffer 缓存池
+- BGM 与 SFX 音量独立控制，互不影响
+- 自动处理浏览器 Autoplay 限制 — 首次用户交互后自动恢复播放
 
 ## 测试覆盖
 
-47 个单元测试覆盖游戏核心逻辑与 UI 组件：
+66 个单元测试覆盖游戏核心逻辑与 UI 组件：
 
 - 游戏逻辑：横向/纵向/左斜/右斜胜利判断、非法落子拒绝、获胜后禁止继续、重置
 - AI 引擎：三档难度 AI 落子决策
-- 音频系统：SFX 预加载/播放/音量控制、AudioProvider 状态管理、AudioPanel 交互
+- BGM 管理器：引擎切换、加载状态、网络失败回退、自定义文件验证、blob URL 清理
+- 音频系统：SFX 预加载/播放/音量控制、AudioProvider 状态管理与持久化、AudioPanel 交互
 - UI 组件：游戏仪表盘渲染、模式切换、AI 对战流程
 
 ## 游戏规则
@@ -128,6 +151,7 @@ npm run build
 - [ ] 悔棋功能
 - [ ] 棋谱回放
 - [ ] 自定义主题
+- [ ] BGM 曲目在线扩展
 
 ## License
 
