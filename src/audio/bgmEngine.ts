@@ -7,6 +7,8 @@ export interface BGMEngine {
   setVolume: (v: number) => void
 }
 
+const FADE_SECONDS = 0.5
+
 // C 大调五声音阶频率 (C D E G A)，跨两个八度
 const SCALE = [
   261.63, 293.66, 329.63, 392.00, 440.00, // C4 D4 E4 G4 A4
@@ -26,11 +28,18 @@ const LOOP_DURATION = MELODY.reduce((sum, [, dur]) => sum + dur * BEAT_DURATION,
 
 export function createBGMEngine(audioCtx: AudioContext): BGMEngine {
   const masterGain = audioCtx.createGain()
-  masterGain.gain.value = 0.5
+  masterGain.gain.value = 0
   masterGain.connect(audioCtx.destination)
 
   let loopTimer: number | null = null
   let isPlaying = false
+  let targetVolume = 0.5
+
+  function fadeTo(value: number) {
+    masterGain.gain.cancelScheduledValues(audioCtx.currentTime)
+    masterGain.gain.setValueAtTime(masterGain.gain.value, audioCtx.currentTime)
+    masterGain.gain.linearRampToValueAtTime(value, audioCtx.currentTime + FADE_SECONDS)
+  }
 
   function playLoop() {
     if (!isPlaying) return
@@ -77,12 +86,19 @@ export function createBGMEngine(audioCtx: AudioContext): BGMEngine {
   }
 
   function start() {
-    if (isPlaying) return
+    if (isPlaying) {
+      fadeTo(targetVolume)
+      return
+    }
     isPlaying = true
+    masterGain.gain.value = 0
     playLoop()
+    fadeTo(targetVolume)
   }
 
   function stop() {
+    if (!isPlaying) return
+    fadeTo(0)
     isPlaying = false
     if (loopTimer !== null) {
       clearTimeout(loopTimer)
@@ -91,7 +107,10 @@ export function createBGMEngine(audioCtx: AudioContext): BGMEngine {
   }
 
   function setVolume(v: number) {
-    masterGain.gain.value = v
+    targetVolume = Math.max(0, Math.min(1, v))
+    if (isPlaying) {
+      fadeTo(targetVolume)
+    }
   }
 
   return { start, stop, setVolume }

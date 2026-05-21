@@ -1,12 +1,28 @@
 // src/components/AudioPanel.tsx
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAudio } from '../audio/useAudio'
+import type { BGMTrackId } from '../audio/types'
 import './AudioPanel.css'
 
 export function AudioPanel() {
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
-  const { bgmVolume, sfxVolume, muted, toggleMute, setBGMVolume, setSFXVolume } = useAudio()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const {
+    bgmVolume,
+    sfxVolume,
+    muted,
+    currentTrackId,
+    availableTracks,
+    isTrackLoading,
+    audioError,
+    toggleMute,
+    setBGMVolume,
+    setSFXVolume,
+    switchTrack,
+    loadCustomFile,
+    clearAudioError,
+  } = useAudio()
 
   const handleClose = useCallback(() => setOpen(false), [])
 
@@ -20,6 +36,17 @@ export function AudioPanel() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
+
+  const handleTrackClick = (trackId: BGMTrackId) => {
+    void switchTrack(trackId)
+  }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    void loadCustomFile(file)
+    event.target.value = ''
+  }
 
   return (
     <div className="audio-panel-float" ref={panelRef}>
@@ -79,6 +106,64 @@ export function AudioPanel() {
               onChange={(e) => setSFXVolume(Number(e.target.value))}
             />
           </div>
+
+          <div className="audio-track-section">
+            <div className="audio-track-title">
+              <span>选择曲目</span>
+              {isTrackLoading && (
+                <span className="audio-loading" aria-live="polite">
+                  <span className="audio-loading-dot" />
+                  加载中
+                </span>
+              )}
+            </div>
+            <div className="audio-track-list">
+              {availableTracks.map((track) => (
+                <button
+                  key={track.id}
+                  type="button"
+                  className={`audio-track-btn${currentTrackId === track.id ? ' is-active' : ''}`}
+                  aria-label={track.name}
+                  onClick={() => handleTrackClick(track.id)}
+                  disabled={isTrackLoading}
+                >
+                  <span className="audio-track-emoji">{track.emoji}</span>
+                  <span className="audio-track-name">{track.name}</span>
+                </button>
+              ))}
+              <button
+                type="button"
+                className="audio-track-btn audio-file-btn"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isTrackLoading}
+              >
+                <span className="audio-track-emoji">📁</span>
+                <span className="audio-track-name">选择本地文件...</span>
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="audio-file-input"
+              aria-label="选择本地音频文件"
+              accept="audio/*"
+              onChange={handleFileChange}
+            />
+          </div>
+
+          {audioError && (
+            <div className="audio-error" role="status">
+              <span>{audioError}</span>
+              <button
+                type="button"
+                className="audio-error-close"
+                aria-label="关闭音频错误提示"
+                onClick={clearAudioError}
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           <button
             type="button"
