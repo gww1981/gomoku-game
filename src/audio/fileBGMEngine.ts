@@ -25,13 +25,14 @@ export function createFileBGMEngine(audioCtx: AudioContext): FileBGMEngine {
 
   function stopSource() {
     if (!sourceNode) return
+    const node = sourceNode
+    sourceNode = null
     try {
-      sourceNode.stop()
+      node.stop(audioCtx.currentTime + FADE_SECONDS)
     } catch {
       // Already stopped.
     }
-    sourceNode.disconnect()
-    sourceNode = null
+    window.setTimeout(() => node.disconnect(), FADE_SECONDS * 1000)
   }
 
   async function load(source: string) {

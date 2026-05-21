@@ -51,11 +51,11 @@ export function createBGMManager(options: BGMManagerOptions = {}): BGMManager {
     return syntheticEngine
   }
 
-  function getFileEngine() {
+  function createNextFileEngine() {
     if (!audioCtx) throw new Error('AudioContext is not initialized')
-    fileEngine ??= createFileBGMEngine(audioCtx)
-    fileEngine.setVolume(volume)
-    return fileEngine
+    const nextFileEngine = createFileBGMEngine(audioCtx)
+    nextFileEngine.setVolume(volume)
+    return nextFileEngine
   }
 
   function start(ctx: AudioContext) {
@@ -74,6 +74,7 @@ export function createBGMManager(options: BGMManagerOptions = {}): BGMManager {
     const thisRequestId = ++requestId
     if (!audioCtx || disposed) {
       currentTrackId = trackId === 'custom' && !customTrack ? 'synthetic' : trackId
+      options.onLoadingChange?.(false)
       emitTrackChange()
       return
     }
@@ -87,15 +88,21 @@ export function createBGMManager(options: BGMManagerOptions = {}): BGMManager {
       activeEngine = getSyntheticEngine()
       activeEngine.setVolume(volume)
       if (shouldPlay) activeEngine.start()
+      options.onLoadingChange?.(false)
       emitTrackChange()
       return
     }
 
     options.onLoadingChange?.(true)
     try {
-      const nextFileEngine = getFileEngine()
+      const nextFileEngine = createNextFileEngine()
       await nextFileEngine.load(track.source)
-      if (disposed || thisRequestId !== requestId) return
+      if (disposed || thisRequestId !== requestId) {
+        nextFileEngine.stop()
+        return
+      }
+      fileEngine?.stop()
+      fileEngine = nextFileEngine
       currentTrackId = track.id
       activeEngine = nextFileEngine
       activeEngine.setVolume(volume)

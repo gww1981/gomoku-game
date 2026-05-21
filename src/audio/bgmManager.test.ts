@@ -1,6 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createBGMManager } from './bgmManager'
 
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
+}
+
 function createMockAudioContext() {
   class MockAudioContext {
     destination = Symbol('destination')
@@ -84,8 +94,102 @@ describe('createBGMManager', () => {
     expect(fetch).toHaveBeenCalledWith('/audio/shanshui.mp3')
     expect(ctx.decodeAudioData).toHaveBeenCalled()
     expect(manager.getCurrentTrack().id).toBe('shanshui')
-    expect(onLoadingChange).toHaveBeenNthCalledWith(1, true)
+    expect(onLoadingChange).toHaveBeenCalledWith(true)
     expect(onLoadingChange).toHaveBeenLastCalledWith(false)
+    manager.dispose()
+  })
+
+  it('clears loading when switching back to synthetic during a pending file load', async () => {
+    const pendingResponse = deferred<Response>()
+    vi.stubGlobal('fetch', vi.fn(() => pendingResponse.promise))
+    const MockAudioContext = createMockAudioContext()
+    const ctx = new MockAudioContext() as unknown as AudioContext
+    const onLoadingChange = vi.fn()
+    const manager = createBGMManager({ onLoadingChange })
+
+    manager.start(ctx)
+    const pendingSwitch = manager.switchTrack('shanshui')
+    await Promise.resolve()
+    expect(onLoadingChange).toHaveBeenLastCalledWith(true)
+
+    await manager.switchTrack('synthetic')
+    expect(manager.getCurrentTrack().id).toBe('synthetic')
+    expect(onLoadingChange).toHaveBeenLastCalledWith(false)
+
+    pendingResponse.resolve({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(8),
+    } as Response)
+    await pendingSwitch
+    expect(manager.getCurrentTrack().id).toBe('synthetic')
+    expect(onLoadingChange).toHaveBeenLastCalledWith(false)
+    manager.dispose()
+  })
+
+  it('does not let a stale file load replace the active file engine buffer', async () => {
+    const slowResponse = deferred<Response>()
+    vi.stubGlobal('fetch', vi.fn((source: string) => {
+      if (source.includes('shanshui')) return slowResponse.promise
+      return Promise.resolve({
+        ok: true,
+        arrayBuffer: async () => new ArrayBuffer(22),
+      })
+    }))
+    class MockAudioContext {
+      destination = Symbol('destination')
+      currentTime = 1
+      startedBuffers: unknown[] = []
+      createGain = vi.fn(() => ({
+        gain: {
+          value: 1,
+          setValueAtTime: vi.fn(),
+          linearRampToValueAtTime: vi.fn(),
+          exponentialRampToValueAtTime: vi.fn(),
+          cancelScheduledValues: vi.fn(),
+        },
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+      }))
+      createOscillator = vi.fn(() => ({
+        type: 'sine',
+        frequency: { value: 0 },
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+      }))
+      createBufferSource = vi.fn(() => {
+        const source = {
+          buffer: null as unknown,
+          loop: false,
+          connect: vi.fn(),
+          start: vi.fn(() => this.startedBuffers.push(source.buffer)),
+          stop: vi.fn(),
+          disconnect: vi.fn(),
+        }
+        return source
+      })
+      decodeAudioData = vi.fn(async (buffer: ArrayBuffer) => ({ label: buffer.byteLength }))
+    }
+    const ctx = new MockAudioContext() as unknown as AudioContext & { startedBuffers: unknown[] }
+    const manager = createBGMManager()
+
+    manager.start(ctx)
+    const slowSwitch = manager.switchTrack('shanshui')
+    await Promise.resolve()
+    await manager.switchTrack('zhulin')
+
+    slowResponse.resolve({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(11),
+    } as Response)
+    await slowSwitch
+
+    expect(manager.getCurrentTrack().id).toBe('zhulin')
+    manager.stop()
+    manager.start(ctx)
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(ctx.startedBuffers.at(-1)).toEqual({ label: 22 })
     manager.dispose()
   })
 
