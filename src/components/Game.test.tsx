@@ -13,7 +13,13 @@ function renderGame() {
 
 function mockGainNode() {
   return {
-    gain: { value: 1, setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+    gain: {
+      value: 1,
+      setValueAtTime: vi.fn(),
+      linearRampToValueAtTime: vi.fn(),
+      exponentialRampToValueAtTime: vi.fn(),
+      cancelScheduledValues: vi.fn(),
+    },
     connect: vi.fn(),
     disconnect: vi.fn(),
   }
@@ -31,16 +37,23 @@ function mockOscNode() {
 
 describe('Game dashboard', () => {
   beforeEach(() => {
-    const gain = mockGainNode()
-    const osc = mockOscNode()
     vi.stubGlobal('AudioContext', class MockAudioContext {
       createGain = vi.fn(() => mockGainNode())
       createOscillator = vi.fn(() => mockOscNode())
+      createBufferSource = vi.fn(() => ({
+        buffer: null,
+        loop: false,
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        disconnect: vi.fn(),
+      }))
       destination = Symbol('destination')
       state: AudioContextState = 'running'
       currentTime = 0
       resume = vi.fn(async () => {})
       close = vi.fn(async () => {})
+      decodeAudioData = vi.fn(async () => ({ duration: 3 }))
     })
   })
 

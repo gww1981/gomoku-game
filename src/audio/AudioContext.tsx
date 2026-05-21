@@ -1,24 +1,62 @@
-import { createContext, useState, useRef, useCallback, useEffect } from 'react'
+import { createContext, useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { createSFXEngine } from './soundEffects'
-import { createBGMEngine } from './bgmEngine'
-import type { AudioContextValue, SFXName } from './types'
+import { createBGMManager, type BGMManager } from './bgmManager'
+import {
+  BGM_STORAGE_KEYS,
+  getAvailableBGMTracks,
+  restoreBoolean,
+  restoreNumber,
+  restoreTrackId,
+} from './bgmTracks'
+import type { AudioContextValue, AudioErrorMessage, BGMTrack, BGMTrackId, SFXName } from './types'
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AudioCtx = createContext<AudioContextValue | null>(null)
 
+function safeStorageGet(key: string) {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeStorageSet(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // Ignore blocked storage; audio controls should still work.
+  }
+}
+
 export function AudioProvider({ children }: { children: ReactNode }) {
-  const [bgmVolume, setBGMVolumeState] = useState(0.5)
-  const [sfxVolume, setSFXVolumeState] = useState(0.7)
-  const [muted, setMuted] = useState(false)
+  const [bgmVolume, setBGMVolumeState] = useState(() =>
+    restoreNumber(safeStorageGet(BGM_STORAGE_KEYS.bgmVolume), 0.5)
+  )
+  const [sfxVolume, setSFXVolumeState] = useState(() =>
+    restoreNumber(safeStorageGet(BGM_STORAGE_KEYS.sfxVolume), 0.7)
+  )
+  const [muted, setMuted] = useState(() =>
+    restoreBoolean(safeStorageGet(BGM_STORAGE_KEYS.muted), false)
+  )
+  const [currentTrackId, setCurrentTrackId] = useState<BGMTrackId>(() =>
+    restoreTrackId(safeStorageGet(BGM_STORAGE_KEYS.trackId))
+  )
+  const [customTrack, setCustomTrack] = useState<BGMTrack | null>(null)
+  const [isTrackLoading, setIsTrackLoading] = useState(false)
+  const [audioError, setAudioError] = useState<AudioErrorMessage>(null)
 
   const audioCtxRef = useRef<AudioContext | null>(null)
   const sfxEngineRef = useRef<ReturnType<typeof createSFXEngine> | null>(null)
-  const bgmEngineRef = useRef<ReturnType<typeof createBGMEngine> | null>(null)
+  const bgmManagerRef = useRef<BGMManager | null>(null)
   const initializedRef = useRef(false)
-  const mutedRef = useRef(false)
-  const sfxVolumeRef = useRef(0.7)
-  const bgmVolumeRef = useRef(0.5)
+  const mutedRef = useRef(muted)
+  const sfxVolumeRef = useRef(sfxVolume)
+  const bgmVolumeRef = useRef(bgmVolume)
+  const initialTrackIdRef = useRef(currentTrackId)
+
+  const availableTracks = useMemo(() => getAvailableBGMTracks(customTrack), [customTrack])
 
   const initAudio = useCallback(() => {
     if (initializedRef.current) return
@@ -27,9 +65,22 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     const ctx = new AudioContext()
     audioCtxRef.current = ctx
     sfxEngineRef.current = createSFXEngine(ctx)
-    sfxEngineRef.current.setVolume(sfxVolumeRef.current)
-    bgmEngineRef.current = createBGMEngine(ctx)
-    bgmEngineRef.current.setVolume(bgmVolumeRef.current)
+    sfxEngineRef.current.setVolume(mutedRef.current ? 0 : sfxVolumeRef.current)
+    bgmManagerRef.current = createBGMManager({
+      initialTrackId: initialTrackIdRef.current,
+      initialVolume: bgmVolumeRef.current,
+      onLoadingChange: setIsTrackLoading,
+      onError: setAudioError,
+      onTrackChange: (trackId, nextCustomTrack) => {
+        setCurrentTrackId(trackId)
+        setCustomTrack(nextCustomTrack)
+        safeStorageSet(BGM_STORAGE_KEYS.trackId, trackId === 'custom' ? 'synthetic' : trackId)
+      },
+    })
+    bgmManagerRef.current.setVolume(bgmVolumeRef.current)
+    if (!mutedRef.current) {
+      bgmManagerRef.current.start(ctx)
+    }
   }, [])
 
   useEffect(() => {
@@ -56,11 +107,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setMuted((prev) => {
       const next = !prev
       mutedRef.current = next
+      safeStorageSet(BGM_STORAGE_KEYS.muted, String(next))
       if (next) {
-        bgmEngineRef.current?.stop()
+        bgmManagerRef.current?.stop()
         sfxEngineRef.current?.setVolume(0)
-      } else {
-        bgmEngineRef.current?.start()
+      } else if (audioCtxRef.current) {
+        bgmManagerRef.current?.start(audioCtxRef.current)
         sfxEngineRef.current?.setVolume(sfxVolumeRef.current)
       }
       return next
@@ -71,13 +123,15 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     const clamped = Math.max(0, Math.min(1, v))
     setBGMVolumeState(clamped)
     bgmVolumeRef.current = clamped
-    bgmEngineRef.current?.setVolume(clamped)
+    safeStorageSet(BGM_STORAGE_KEYS.bgmVolume, String(clamped))
+    bgmManagerRef.current?.setVolume(clamped)
   }, [])
 
   const setSFXVolume = useCallback((v: number) => {
     const clamped = Math.max(0, Math.min(1, v))
     setSFXVolumeState(clamped)
     sfxVolumeRef.current = clamped
+    safeStorageSet(BGM_STORAGE_KEYS.sfxVolume, String(clamped))
     if (!mutedRef.current) {
       sfxEngineRef.current?.setVolume(clamped)
     }
@@ -89,13 +143,31 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const resumeBGM = useCallback(() => {
-    if (mutedRef.current) return
-    bgmEngineRef.current?.start()
+    if (mutedRef.current || !audioCtxRef.current) return
+    bgmManagerRef.current?.start(audioCtxRef.current)
   }, [])
 
   const stopBGM = useCallback(() => {
-    bgmEngineRef.current?.stop()
+    bgmManagerRef.current?.stop()
   }, [])
+
+  const switchTrack = useCallback(async (trackId: BGMTrackId) => {
+    setAudioError(null)
+    await bgmManagerRef.current?.switchTrack(trackId)
+    if (mutedRef.current) {
+      bgmManagerRef.current?.stop()
+    }
+  }, [])
+
+  const loadCustomFile = useCallback(async (file: File) => {
+    setAudioError(null)
+    await bgmManagerRef.current?.loadCustomFile(file)
+    if (mutedRef.current) {
+      bgmManagerRef.current?.stop()
+    }
+  }, [])
+
+  const clearAudioError = useCallback(() => setAudioError(null), [])
 
   useEffect(() => {
     mutedRef.current = muted
@@ -105,11 +177,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     return () => {
-      bgmEngineRef.current?.stop()
+      bgmManagerRef.current?.dispose()
       audioCtxRef.current?.close().catch(() => {})
       audioCtxRef.current = null
       sfxEngineRef.current = null
-      bgmEngineRef.current = null
+      bgmManagerRef.current = null
       initializedRef.current = false
     }
   }, [])
@@ -118,12 +190,20 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     bgmVolume,
     sfxVolume,
     muted,
+    currentTrackId,
+    availableTracks,
+    customTrack,
+    isTrackLoading,
+    audioError,
     toggleMute,
     setBGMVolume,
     setSFXVolume,
     playSFX,
     resumeBGM,
     stopBGM,
+    switchTrack,
+    loadCustomFile,
+    clearAudioError,
   }
 
   return <AudioCtx.Provider value={value}>{children}</AudioCtx.Provider>
