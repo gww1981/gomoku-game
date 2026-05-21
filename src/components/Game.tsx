@@ -1,5 +1,5 @@
 // src/components/Game.tsx
-import { useReducer, useEffect, useCallback, useRef } from 'react'
+import { useReducer, useEffect, useCallback, useRef, useState } from 'react'
 import { gameReducer, getInitialGameState } from '../game/gameReducer'
 import { getAIMove } from '../game/ai'
 import type { GameMode, AIDifficulty } from '../game/types'
@@ -8,6 +8,10 @@ import { Status } from './Status'
 import { ModeSelect } from './ModeSelect'
 import { AudioPanel } from './AudioPanel'
 import { useAudio } from '../audio/useAudio'
+import { useReplay } from '../replay/useReplay'
+import { saveGameRecord } from '../replay/storage'
+import { ReplayBar } from './ReplayBar'
+import { GameRecordList } from './GameRecordList'
 
 const AI_THINKING_DELAY = 400
 
@@ -23,6 +27,10 @@ export function Game() {
   const prevStatusRef = useRef(state.status)
   const prevAIThinkingRef = useRef(state.isAIThinking)
 
+  const [replayOpen, setReplayOpen] = useState(false)
+  const [isReplayMode, setIsReplayMode] = useState(false)
+  const replay = useReplay()
+
   const handleModeSelect = useCallback((mode: GameMode, aiDifficulty?: AIDifficulty) => {
     dispatch({ type: 'SET_MODE', mode, aiDifficulty })
     audio.playSFX('click')
@@ -36,6 +44,56 @@ export function Game() {
     dispatch({ type: 'MOVE', row, col })
     audio.playSFX('move')
   }, [state.status, state.isAIThinking, state.settings.mode, state.currentPlayer, audio])
+
+  const handleUndo = useCallback(() => {
+    dispatch({ type: 'UNDO' })
+    audio.playSFX('move')
+  }, [audio])
+
+  const handleOpenReplayList = useCallback(() => {
+    setReplayOpen(true)
+  }, [])
+
+  const handleCloseReplayList = useCallback(() => {
+    setReplayOpen(false)
+  }, [])
+
+  const handleSelectRecord = useCallback((record: import('../game/types').GameRecord) => {
+    replay.loadRecord(record)
+    setIsReplayMode(true)
+    setReplayOpen(false)
+  }, [replay])
+
+  const handleExitReplay = useCallback(() => {
+    setIsReplayMode(false)
+    dispatch({ type: 'RESET' })
+  }, [])
+
+  // Save game record when game ends and enter replay mode
+  useEffect(() => {
+    if ((state.status === 'won' || state.status === 'draw') && state.moveHistory.length > 0) {
+      const record: import('../game/types').GameRecord = {
+        id: crypto.randomUUID(),
+        version: 1,
+        createdAt: new Date().toISOString(),
+        boardSize: 15,
+        gameMode: state.settings.mode,
+        aiDifficulty: state.settings.aiDifficulty,
+        players: {
+          black: { name: '黑方', isAI: state.settings.mode === 'ai' },
+          white: { name: '白方', isAI: false },
+        },
+        result: {
+          winner: state.winner,
+          winningCells: state.winningCells,
+        },
+        moves: state.moveHistory,
+      }
+      saveGameRecord(record)
+      replay.loadRecord(record)
+      setIsReplayMode(true)
+    }
+  }, [state.status, state.moveHistory, state.winner, state.winningCells, state.settings, replay])
 
   useEffect(() => {
     if (state.status !== 'playing') return
@@ -120,23 +178,65 @@ export function Game() {
         </header>
         <div className="board-stage">
           <Board
-            board={state.board}
-            onCellClick={handleCellClick}
-            lastMove={state.lastMove}
-            winningCells={state.winningCells || []}
+            board={isReplayMode ? replay.state.board : state.board}
+            onCellClick={isReplayMode ? () => {} : handleCellClick}
+            lastMove={isReplayMode ? (replay.state.moves[replay.state.currentIndex]?.position ?? null) : state.lastMove}
+            winningCells={isReplayMode ? [] : state.winningCells || []}
+            moveNumbers={replay.state.moves.map((m, i) => ({ row: m.position.row, col: m.position.col, number: m.index }))}
+            currentMoveIndex={replay.state.currentIndex}
           />
         </div>
         <footer className="game-footer">
           <span className="mode-badge">{modeLabel}</span>
-          <Status gameState={state} />
-          {state.status !== 'playing' && (
-            <button type="button" className="reset-button" onClick={handleReset}>
-              重新开始
-            </button>
+          {isReplayMode ? (
+            <>
+              <button type="button" className="replay-list-button" onClick={handleOpenReplayList}>
+                录像列表
+              </button>
+              <button type="button" className="undo-button" onClick={handleExitReplay}>
+                退出回放
+              </button>
+              <ReplayBar
+                currentIndex={replay.state.currentIndex}
+                totalMoves={replay.state.moves.length}
+                isPlaying={replay.state.isPlaying}
+                speed={replay.state.speed}
+                onPlay={replay.play}
+                onPause={replay.pause}
+                onStepForward={replay.stepForward}
+                onStepBackward={replay.stepBackward}
+                onJumpToStart={replay.jumpToStart}
+                onJumpToEnd={replay.jumpToEnd}
+                onJumpTo={replay.jumpTo}
+                onSetSpeed={replay.setSpeed}
+              />
+            </>
+          ) : (
+            <>
+              <Status gameState={state} />
+              {state.status !== 'playing' && (
+                <button type="button" className="reset-button" onClick={handleReset}>
+                  重新开始
+                </button>
+              )}
+              {state.status === 'playing' && state.moveHistory.length > 0 && (
+                <button type="button" className="undo-button" onClick={handleUndo}>
+                  悔棋
+                </button>
+              )}
+              <button type="button" className="replay-list-button" onClick={handleOpenReplayList}>
+                录像列表
+              </button>
+            </>
           )}
         </footer>
       </section>
       <AudioPanel />
+      <GameRecordList
+        isOpen={replayOpen}
+        onClose={handleCloseReplayList}
+        onSelectRecord={handleSelectRecord}
+      />
     </main>
   )
 }
