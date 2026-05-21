@@ -35,6 +35,7 @@ export function Cell({ piece, onClick, className = '', moveNumber, isLastMove }:
       onClick={onClick}
       onKeyDown={handleKeyDown}
       data-piece={piece ?? ''}
+      aria-current={isLastMove ? 'step' : undefined}
     >
       {piece && <div className={`piece ${piece}`} />}
       {moveNumber !== undefined && moveNumber > 0 && (

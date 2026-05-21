@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
+import { StrictMode } from 'react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { Game } from './Game'
 import { AudioProvider } from '../audio/AudioContext'
@@ -8,7 +9,11 @@ function getCells(container: HTMLElement) {
 }
 
 function renderGame() {
-  return render(<AudioProvider><Game /></AudioProvider>)
+  return render(
+    <StrictMode>
+      <AudioProvider><Game /></AudioProvider>
+    </StrictMode>
+  )
 }
 
 function mockGainNode() {
@@ -37,6 +42,7 @@ function mockOscNode() {
 
 describe('Game dashboard', () => {
   beforeEach(() => {
+    localStorage.clear()
     vi.stubGlobal('AudioContext', class MockAudioContext {
       createGain = vi.fn(() => mockGainNode())
       createOscillator = vi.fn(() => mockOscNode())
@@ -59,6 +65,7 @@ describe('Game dashboard', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
+    localStorage.clear()
   })
 
   it('shows the board, mode controls, and status on first render', () => {
@@ -138,5 +145,24 @@ describe('Game dashboard', () => {
     fireEvent.keyDown(firstCell, { key: 'Enter', code: 'Enter' })
 
     expect(firstCell).toHaveAttribute('data-piece', 'black')
+  })
+
+  it('saves one replay record when a game ends', () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem')
+    const { container } = renderGame()
+    const cells = getCells(container)
+
+    fireEvent.click(cells[0])
+    fireEvent.click(cells[15])
+    fireEvent.click(cells[1])
+    fireEvent.click(cells[16])
+    fireEvent.click(cells[2])
+    fireEvent.click(cells[17])
+    fireEvent.click(cells[3])
+    fireEvent.click(cells[18])
+    fireEvent.click(cells[4])
+
+    const replayWrites = setItemSpy.mock.calls.filter(([key]) => key === 'gomoku-game-records')
+    expect(replayWrites).toHaveLength(1)
   })
 })

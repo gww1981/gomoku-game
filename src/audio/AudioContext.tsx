@@ -83,6 +83,13 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const resumeAudioContext = useCallback(async () => {
+    const ctx = audioCtxRef.current
+    if (ctx?.state === 'suspended') {
+      await ctx.resume().catch(() => {})
+    }
+  }, [])
+
   useEffect(() => {
     initAudio()
 
@@ -153,19 +160,21 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const switchTrack = useCallback(async (trackId: BGMTrackId) => {
     setAudioError(null)
+    await resumeAudioContext()
     await bgmManagerRef.current?.switchTrack(trackId)
     if (mutedRef.current) {
       bgmManagerRef.current?.stop()
     }
-  }, [])
+  }, [resumeAudioContext])
 
   const loadCustomFile = useCallback(async (file: File) => {
     setAudioError(null)
+    await resumeAudioContext()
     await bgmManagerRef.current?.loadCustomFile(file)
     if (mutedRef.current) {
       bgmManagerRef.current?.stop()
     }
-  }, [])
+  }, [resumeAudioContext])
 
   const clearAudioError = useCallback(() => setAudioError(null), [])
 
@@ -186,7 +195,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const value: AudioContextValue = {
+  const value: AudioContextValue = useMemo(() => ({
     bgmVolume,
     sfxVolume,
     muted,
@@ -204,7 +213,25 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     switchTrack,
     loadCustomFile,
     clearAudioError,
-  }
+  }), [
+    bgmVolume,
+    sfxVolume,
+    muted,
+    currentTrackId,
+    availableTracks,
+    customTrack,
+    isTrackLoading,
+    audioError,
+    toggleMute,
+    setBGMVolume,
+    setSFXVolume,
+    playSFX,
+    resumeBGM,
+    stopBGM,
+    switchTrack,
+    loadCustomFile,
+    clearAudioError,
+  ])
 
   return <AudioCtx.Provider value={value}>{children}</AudioCtx.Provider>
 }

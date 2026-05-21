@@ -1,9 +1,30 @@
-// src/components/AudioPanel.test.tsx
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { AudioPanel } from './AudioPanel'
 import { AudioCtx } from '../audio/AudioContext'
 import type { AudioContextValue } from '../audio/types'
+
+const labels = {
+  control: '\u97f3\u9891\u63a7\u5236',
+  close: '\u5173\u95ed',
+  bgm: '\u80cc\u666f\u97f3\u4e50',
+  bgmVolume: '\u80cc\u666f\u97f3\u4e50\u97f3\u91cf',
+  sfx: '\u97f3\u6548',
+  sfxVolume: '\u97f3\u6548\u97f3\u91cf',
+  trackTitle: '\u9009\u62e9\u66f2\u76ee',
+  synthetic: '\u53e4\u97f5\u5408\u6210',
+  preset1: '\u5b81\u9759\u68ee\u6797',
+  preset2: '\u53e4\u5178\u65f6\u5149',
+  preset3: '\u4e1c\u65b9\u7985\u610f',
+  preset4: '\u66ae\u5149\u4e4b\u57ce',
+  preset5: '\u590f\u65e5\u5348\u540e',
+  file: '\u9009\u62e9\u672c\u5730\u6587\u4ef6',
+  fileInput: '\u9009\u62e9\u672c\u5730\u97f3\u9891\u6587\u4ef6',
+  muted: '\u53d6\u6d88\u9759\u97f3',
+  mute: '\u9759\u97f3',
+  loading: '\u52a0\u8f7d\u4e2d',
+  closeError: '\u5173\u95ed\u97f3\u9891\u9519\u8bef\u63d0\u793a',
+}
 
 const mockAudioValue: AudioContextValue = {
   bgmVolume: 0.5,
@@ -11,10 +32,12 @@ const mockAudioValue: AudioContextValue = {
   muted: false,
   currentTrackId: 'synthetic',
   availableTracks: [
-    { id: 'synthetic', name: '古韵合成', type: 'synthetic', emoji: '🎼' },
-    { id: 'shanshui', name: '山水清音', type: 'file', source: '/audio/shanshui.mp3', emoji: '🏞️' },
-    { id: 'zhulin', name: '竹林幽径', type: 'file', source: '/audio/zhulin.mp3', emoji: '🎋' },
-    { id: 'yuexia', name: '月下棋声', type: 'file', source: '/audio/yuexia.mp3', emoji: '🌙' },
+    { id: 'synthetic', name: labels.synthetic, type: 'synthetic', emoji: '\ud83c\udfbc' },
+    { id: 'preset-1', name: labels.preset1, type: 'file', source: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', emoji: '\ud83c\udf32' },
+    { id: 'preset-2', name: labels.preset2, type: 'file', source: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', emoji: '\ud83c\udfbb' },
+    { id: 'preset-3', name: labels.preset3, type: 'file', source: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', emoji: '\ud83c\udfef' },
+    { id: 'preset-4', name: labels.preset4, type: 'file', source: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', emoji: '\ud83c\udf06' },
+    { id: 'preset-5', name: labels.preset5, type: 'file', source: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3', emoji: '\u2600\ufe0f' },
   ],
   customTrack: null,
   isTrackLoading: false,
@@ -44,120 +67,117 @@ describe('AudioPanel', () => {
     vi.restoreAllMocks()
   })
 
-  it('默认收起状态只显示图标按钮', () => {
+  it('defaults to a collapsed icon button', () => {
     renderPanel()
-    expect(screen.getByRole('button', { name: '音频控制' })).toBeInTheDocument()
-    expect(screen.queryByText('背景音乐')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: labels.control })).toBeInTheDocument()
+    expect(screen.queryByText(labels.bgm)).not.toBeInTheDocument()
   })
 
-  it('点击图标按钮展开面板', () => {
+  it('opens when clicking the icon button', () => {
     renderPanel()
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    expect(screen.getByText('背景音乐')).toBeInTheDocument()
-    expect(screen.getByText('音效')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    expect(screen.getByText(labels.bgm)).toBeInTheDocument()
+    expect(screen.getByText(labels.sfx)).toBeInTheDocument()
   })
 
-  it('静音按钮切换静音状态', () => {
+  it('calls toggleMute from the mute button', () => {
     const toggleMute = vi.fn()
     renderPanel({ toggleMute })
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    fireEvent.click(screen.getByRole('button', { name: '静音' }))
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    fireEvent.click(screen.getByRole('button', { name: labels.mute }))
     expect(toggleMute).toHaveBeenCalled()
   })
 
-  it('BGM 音量滑块调用 setBGMVolume', () => {
+  it('calls setBGMVolume from the BGM slider', () => {
     const setBGMVolume = vi.fn()
     renderPanel({ setBGMVolume })
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    const slider = screen.getByLabelText('背景音乐音量')
-    fireEvent.change(slider, { target: { value: '0.8' } })
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    fireEvent.change(screen.getByLabelText(labels.bgmVolume), { target: { value: '0.8' } })
     expect(setBGMVolume).toHaveBeenCalledWith(0.8)
   })
 
-  it('SFX 音量滑块调用 setSFXVolume', () => {
+  it('calls setSFXVolume from the SFX slider', () => {
     const setSFXVolume = vi.fn()
     renderPanel({ setSFXVolume })
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    const slider = screen.getByLabelText('音效音量')
-    fireEvent.change(slider, { target: { value: '0.3' } })
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    fireEvent.change(screen.getByLabelText(labels.sfxVolume), { target: { value: '0.3' } })
     expect(setSFXVolume).toHaveBeenCalledWith(0.3)
   })
 
-  it('静音状态下静音按钮显示取消静音文本', () => {
+  it('shows unmute text when muted', () => {
     renderPanel({ muted: true })
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    expect(screen.getByRole('button', { name: '取消静音' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    expect(screen.getByRole('button', { name: labels.muted })).toBeInTheDocument()
   })
 
-  it('点击关闭按钮收起面板', () => {
+  it('closes the panel from the close button', () => {
     renderPanel()
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    expect(screen.getByText('背景音乐')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '关闭' }))
-    expect(screen.queryByText('背景音乐')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    expect(screen.getByText(labels.bgm)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: labels.close }))
+    expect(screen.queryByText(labels.bgm)).not.toBeInTheDocument()
   })
 
-  it('展开后显示内置曲目列表', () => {
+  it('shows built-in SoundHelix preset tracks', () => {
     renderPanel()
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    expect(screen.getByText('选择曲目')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '古韵合成' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '山水清音' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '竹林幽径' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '月下棋声' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    expect(screen.getByText(labels.trackTitle)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: labels.synthetic })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: labels.preset1 })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: labels.preset2 })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: labels.preset3 })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: labels.preset4 })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: labels.preset5 })).toBeInTheDocument()
   })
 
-  it('点击曲目调用 switchTrack', () => {
+  it('calls switchTrack when clicking a track', () => {
     const switchTrack = vi.fn(async () => {})
     renderPanel({ switchTrack })
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    fireEvent.click(screen.getByRole('button', { name: '山水清音' }))
-    expect(switchTrack).toHaveBeenCalledWith('shanshui')
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    fireEvent.click(screen.getByRole('button', { name: labels.preset1 }))
+    expect(switchTrack).toHaveBeenCalledWith('preset-1')
   })
 
-  it('当前曲目按钮有选中状态', () => {
-    renderPanel({ currentTrackId: 'zhulin' })
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    expect(screen.getByRole('button', { name: '竹林幽径' })).toHaveClass('is-active')
+  it('marks the current track as active', () => {
+    renderPanel({ currentTrackId: 'preset-3' })
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    expect(screen.getByRole('button', { name: labels.preset3 })).toHaveClass('is-active')
   })
 
-  it('点击选择本地文件后调用 loadCustomFile', () => {
+  it('calls loadCustomFile when choosing a local file', () => {
     const loadCustomFile = vi.fn(async () => {})
     renderPanel({ loadCustomFile })
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    const input = screen.getByLabelText('选择本地音频文件')
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
     const file = new File(['audio'], 'local.mp3', { type: 'audio/mpeg' })
-    fireEvent.change(input, { target: { files: [file] } })
+    fireEvent.change(screen.getByLabelText(labels.fileInput), { target: { files: [file] } })
     expect(loadCustomFile).toHaveBeenCalledWith(file)
   })
 
-  it('文件按钮触发隐藏文件输入并限制音频类型', () => {
+  it('opens the hidden file input from the file button', () => {
     const clickSpy = vi.spyOn(HTMLInputElement.prototype, 'click')
     renderPanel()
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    const input = screen.getByLabelText('选择本地音频文件')
-
-    expect(input).toHaveAttribute('accept', 'audio/*')
-    fireEvent.click(screen.getByRole('button', { name: /选择本地文件/ }))
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    expect(screen.getByLabelText(labels.fileInput)).toHaveAttribute('accept', 'audio/*')
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(labels.file) }))
     expect(clickSpy).toHaveBeenCalled()
   })
 
-  it('加载中时显示曲目加载提示', () => {
+  it('disables track buttons while loading', () => {
     renderPanel({ isTrackLoading: true })
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    expect(screen.getByText('加载中')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '山水清音' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    expect(screen.getByText(labels.loading)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: labels.preset1 })).toBeDisabled()
   })
 
-  it('显示音频错误并允许关闭', () => {
+  it('shows and closes audio errors', () => {
     const clearAudioError = vi.fn()
     renderPanel({
-      audioError: '网络音频加载失败，已切换回合成BGM',
+      audioError: '\u7f51\u7edc\u97f3\u9891\u52a0\u8f7d\u5931\u8d25\uff0c\u5df2\u5207\u6362\u56de\u5408\u6210BGM',
       clearAudioError,
     })
-    fireEvent.click(screen.getByRole('button', { name: '音频控制' }))
-    expect(screen.getByText('网络音频加载失败，已切换回合成BGM')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '关闭音频错误提示' }))
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    expect(screen.getByText('\u7f51\u7edc\u97f3\u9891\u52a0\u8f7d\u5931\u8d25\uff0c\u5df2\u5207\u6362\u56de\u5408\u6210BGM')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: labels.closeError }))
     expect(clearAudioError).toHaveBeenCalled()
   })
 })

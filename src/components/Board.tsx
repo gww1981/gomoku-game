@@ -28,6 +28,7 @@ export function Board({ board, onCellClick, lastMove, winningCells = [], moveNum
 
   const getMoveNumber = (row: number, col: number) => {
     const move = moveNumbers?.find(m => m.row === row && m.col === col)
+    if (move && currentMoveIndex >= 0 && move.number > currentMoveIndex + 1) return undefined
     return move?.number
   }
 
