@@ -150,7 +150,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         index: state.moveHistory.length + 1,
         player: state.currentPlayer,
         position: { row: action.row, col: action.col },
-        timestamp: Date.now(),
+        timestamp: Date.now() - state.gameStartTime,
       }
 
       return {

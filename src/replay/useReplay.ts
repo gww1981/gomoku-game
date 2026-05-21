@@ -4,7 +4,7 @@ import type { ReplayAction } from './types'
 import type { GameRecord } from '../game/types'
 
 export function useReplay() {
-  const [state, dispatch] = useReducer(replayReducer, getInitialReplayState())
+  const [state, dispatch] = useReducer(replayReducer, undefined, getInitialReplayState)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
