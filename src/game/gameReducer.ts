@@ -63,22 +63,33 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
 
     case 'UNDO': {
+      if (state.status !== 'playing') return state
       if (state.moveHistory.length === 0) return state
-      const lastMove = state.moveHistory[state.moveHistory.length - 1]
-      const newBoard = state.board.map(r => [...r])
-      newBoard[lastMove.position.row][lastMove.position.col] = null
-      const newHistory = state.moveHistory.slice(0, -1)
+      if (state.isAIThinking) return state
+
+      const stepsToUndo = state.settings.mode === 'ai' ? 2 : 1
+      const actualSteps = Math.min(stepsToUndo, state.moveHistory.length)
+      const newHistory = state.moveHistory.slice(0, -actualSteps)
+
+      // 从空棋盘重放 newHistory 重建棋盘
+      const newBoard = createEmptyBoard()
+      let lastMove: Position | null = null
+      for (const move of newHistory) {
+        newBoard[move.position.row][move.position.col] = move.player
+        lastMove = move.position
+      }
+
+      const currentPlayer = newHistory.length % 2 === 0 ? 'black' : 'white'
+
       return {
         ...state,
         board: newBoard,
-        currentPlayer: lastMove.player,
         moveHistory: newHistory,
-        lastMove: newHistory.length > 0
-          ? newHistory[newHistory.length - 1].position
-          : null,
+        currentPlayer,
+        lastMove,
+        winningCells: [],
         status: 'playing',
         winner: null,
-        winningCells: [],
       }
     }
 
@@ -115,6 +126,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         lastMove: { row: action.row, col: action.col },
         winningCells: newWinningCells,
         isAIThinking: false,
+        moveHistory: [
+          ...state.moveHistory,
+          {
+            index: state.moveHistory.length + 1,
+            player: state.currentPlayer,
+            position: { row: action.row, col: action.col },
+            timestamp: Date.now() - state.gameStartTime,
+          },
+        ],
       }
     }
 
