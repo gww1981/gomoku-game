@@ -125,9 +125,54 @@ moveHistory: [...state.moveHistory, moveRecord]
 
 `RESET` 和 `SET_MODE` 时清空 `moveHistory` 并重置 `gameStartTime`。
 
+### 悔棋（UNDO）
+
+新增 `UNDO` action，利用 `moveHistory` 实现悔棋：
+
+```typescript
+// gameReducer 新增 action
+| { type: 'UNDO' }
+```
+
+**规则**：
+- PvP 模式：回退一步（当前对手的最后一手）
+- AI 模式：回退两步（AI 的一手 + 玩家的一手），确保悔棋后轮到玩家
+- 游戏结束后（status !== 'playing'）不能悔棋
+- 空棋盘（moveHistory 为空）时不能悔棋
+- AI 思考中（isAIThinking）时不能悔棋
+
+**实现逻辑**：
+
+```typescript
+case 'UNDO': {
+  if (state.status !== 'playing' || state.moveHistory.length === 0 || state.isAIThinking) {
+    return state
+  }
+  const stepsToUndo = state.settings.mode === 'ai' ? 2 : 1
+  const actualSteps = Math.min(stepsToUndo, state.moveHistory.length)
+  const newHistory = state.moveHistory.slice(0, -actualSteps)
+  // 从空棋盘重放 newHistory 重建棋盘
+  const newBoard = createEmptyBoard()
+  let lastMove: Position | null = null
+  for (const move of newHistory) {
+    newBoard[move.position.row][move.position.col] = move.player
+    lastMove = move.position
+  }
+  const currentPlayer = newHistory.length % 2 === 0 ? 'black' : 'white'
+  return {
+    ...state,
+    board: newBoard,
+    moveHistory: newHistory,
+    currentPlayer,
+    lastMove,
+    winningCells: [],
+  }
+}
+```
+
 游戏结束时（`status` 变为 `'won'` 或 `'draw'`），从 `GameState` 生成完整的 `GameRecord` 并存入 localStorage。这一步在 `Game` 组件的 `useEffect` 中完成，不侵入 reducer。
 
-影响范围极小：只改 `types.ts`（加2个字段）和 `gameReducer.ts`（加3行记录逻辑），不改变任何现有行为。
+影响范围：改 `types.ts`（加2个字段 + UNDO action 类型）和 `gameReducer.ts`（加 moveHistory 记录逻辑 + UNDO 处理），不改变任何现有行为。
 
 ## 4. UI 组件与交互
 
@@ -151,6 +196,7 @@ Game
   │         └─ Cell（回放模式接收 moveNumber 属性显示步数标注）
   ├─ footer
   │    ├─ Status（现有）
+  │    ├─ UndoButton（游戏中显示，PvP回退1步/AI回退2步）
   │    └─ ReplayBar（游戏结束后显示，替代"重新开始"按钮位置）
   ├─ GameRecordList（右侧抽屉，点击"📜 录像列表"按钮打开）
   └─ AudioPanel（现有，不受影响）
@@ -220,7 +266,6 @@ const MAX_RECORDS = 50
 
 ## 不在范围内
 
-- 悔棋功能
 - SGF 导出/导入
 - 变招分支
 - 真实节奏回放（按思考时间间隔播放）
