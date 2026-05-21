@@ -49,6 +49,8 @@ export function getInitialGameState(): GameState {
       aiDifficulty: 'medium',
     },
     isAIThinking: false,
+    moveHistory: [],
+    gameStartTime: Date.now(),
   }
 }
 
@@ -59,6 +61,37 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...getInitialGameState(),
         settings: state.settings,
       }
+
+    case 'UNDO': {
+      if (state.status !== 'playing') return state
+      if (state.moveHistory.length === 0) return state
+      if (state.isAIThinking) return state
+
+      const stepsToUndo = state.settings.mode === 'ai' ? 2 : 1
+      const actualSteps = Math.min(stepsToUndo, state.moveHistory.length)
+      const newHistory = state.moveHistory.slice(0, -actualSteps)
+
+      // 从空棋盘重放 newHistory 重建棋盘
+      const newBoard = createEmptyBoard()
+      let lastMove: Position | null = null
+      for (const move of newHistory) {
+        newBoard[move.position.row][move.position.col] = move.player
+        lastMove = move.position
+      }
+
+      const currentPlayer = newHistory.length % 2 === 0 ? 'black' : 'white'
+
+      return {
+        ...state,
+        board: newBoard,
+        moveHistory: newHistory,
+        currentPlayer,
+        lastMove,
+        winningCells: [],
+        status: 'playing',
+        winner: null,
+      }
+    }
 
     case 'SET_MODE':
       return {
@@ -93,6 +126,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         lastMove: { row: action.row, col: action.col },
         winningCells: newWinningCells,
         isAIThinking: false,
+        moveHistory: [
+          ...state.moveHistory,
+          {
+            index: state.moveHistory.length + 1,
+            player: state.currentPlayer,
+            position: { row: action.row, col: action.col },
+            timestamp: Date.now() - state.gameStartTime,
+          },
+        ],
       }
     }
 
@@ -104,6 +146,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       newBoard[action.row][action.col] = state.currentPlayer
       const won = checkWin(newBoard, action.row, action.col, state.currentPlayer)
       const newWinningCells = won ? getWinningCells(newBoard, action.row, action.col, state.currentPlayer) : []
+      const newMoveRecord = {
+        index: state.moveHistory.length + 1,
+        player: state.currentPlayer,
+        position: { row: action.row, col: action.col },
+        timestamp: Date.now() - state.gameStartTime,
+      }
 
       return {
         ...state,
@@ -113,6 +161,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         winner: won ? state.currentPlayer : null,
         lastMove: { row: action.row, col: action.col },
         winningCells: newWinningCells,
+        moveHistory: [...state.moveHistory, newMoveRecord],
       }
     }
 

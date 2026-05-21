@@ -5,6 +5,8 @@ interface CellProps {
   piece: Player | null
   onClick: () => void
   className?: string
+  moveNumber?: number
+  isLastMove?: boolean
 }
 
 const pieceLabel: Record<Player, string> = {
@@ -12,7 +14,7 @@ const pieceLabel: Record<Player, string> = {
   white: '白棋',
 }
 
-export function Cell({ piece, onClick, className = '' }: CellProps) {
+export function Cell({ piece, onClick, className = '', moveNumber, isLastMove }: CellProps) {
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
       onClick()
@@ -35,6 +37,9 @@ export function Cell({ piece, onClick, className = '' }: CellProps) {
       data-piece={piece ?? ''}
     >
       {piece && <div className={`piece ${piece}`} />}
+      {moveNumber !== undefined && moveNumber > 0 && (
+        <span className="move-number">{moveNumber}</span>
+      )}
     </div>
   )
 }

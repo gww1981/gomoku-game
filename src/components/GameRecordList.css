@@ -1,0 +1,178 @@
+@media (prefers-reduced-motion: reduce) {
+  .record-list-overlay,
+  .record-list-drawer {
+    animation: none;
+  }
+}
+
+.record-list-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  animation: fadeIn 200ms ease-out;
+}
+
+.record-list-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(360px, 90vw);
+  background: var(--panel);
+  border-left: 1px solid var(--panel-line);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 260ms ease-out;
+}
+
+.record-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-line);
+}
+
+.record-list-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.record-list-clear {
+  padding: 4px 10px;
+  background: rgba(28, 18, 12, 0.74);
+  border: 1px solid rgba(201, 168, 108, 0.28);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.record-list-clear:hover {
+  color: var(--accent-red);
+  border-color: var(--accent-red);
+}
+
+.record-list-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 168, 108, 0.3) transparent;
+}
+
+.record-list-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.record-list-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.record-list-body::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 108, 0.3);
+  border-radius: 3px;
+}
+
+.record-list-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 168, 108, 0.5);
+}
+
+.record-list-empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--text-secondary);
+}
+
+.record-list-empty p { margin: 0; }
+
+.record-list-empty-hint {
+  margin-top: 8px !important;
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.record-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.record-item {
+  position: relative;
+  padding: 12px 14px;
+  background: rgba(28, 18, 12, 0.6);
+  border: 1px solid rgba(201, 168, 108, 0.1);
+  border-left: 3px solid var(--accent-gold);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.record-item:hover {
+  background: rgba(52, 34, 23, 0.88);
+  border-color: rgba(242, 206, 122, 0.3);
+}
+
+.record-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.record-badge {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.badge-black { color: var(--text-primary); }
+.badge-white { color: var(--text-secondary); }
+.badge-draw { color: var(--text-muted); }
+
+.record-time {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.record-item-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.record-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 160ms ease, color 160ms ease;
+}
+
+.record-item:hover .record-delete-btn { opacity: 1; }
+.record-delete-btn:hover { color: var(--accent-red); }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}

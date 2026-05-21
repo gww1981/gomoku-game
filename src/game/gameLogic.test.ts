@@ -177,3 +177,36 @@ describe('gameReducer', () => {
     expect(state.status).toBe('playing')
   })
 })
+
+describe('moveHistory collection', () => {
+  it('MOVE action should record move to history', () => {
+    const state = getInitialGameState()
+    const newState = gameReducer(state, { type: 'MOVE', row: 7, col: 7 })
+    expect(newState.moveHistory).toHaveLength(1)
+    expect(newState.moveHistory[0]).toEqual({
+      index: 1,
+      player: 'black',
+      position: { row: 7, col: 7 },
+      timestamp: expect.any(Number),
+    })
+  })
+
+  it('RESET should clear moveHistory', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, { type: 'MOVE', row: 7, col: 7 })
+    state = gameReducer(state, { type: 'RESET' })
+    expect(state.moveHistory).toHaveLength(0)
+    expect(state.gameStartTime).toBeGreaterThan(0)
+  })
+
+  it('UNDO should revert one move in pvp mode', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, { type: 'MOVE', row: 7, col: 7 })
+    state = gameReducer(state, { type: 'MOVE', row: 8, col: 8 })
+    state = gameReducer(state, { type: 'UNDO' })
+    expect(state.moveHistory).toHaveLength(1)
+    expect(state.board[7][7]).toBe('black')
+    expect(state.board[8][8]).toBeNull()
+    expect(state.currentPlayer).toBe('white')
+  })
+})

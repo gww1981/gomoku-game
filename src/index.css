@@ -68,3 +68,51 @@ h2,
 p {
   margin: 0;
 }
+
+/* Move number label on board */
+.move-number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-gold);
+  pointer-events: none;
+  z-index: 1;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Undo button in footer */
+.undo-button {
+  padding: 6px 12px;
+  background: var(--panel-soft);
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.undo-button:hover {
+  background: var(--panel);
+  color: var(--text-primary);
+}
+
+/* Replay list button in footer */
+.replay-list-button {
+  padding: 6px 12px;
+  background: var(--panel-soft);
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.replay-list-button:hover {
+  background: var(--panel);
+  color: var(--text-primary);
+}

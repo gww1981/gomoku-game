@@ -5,6 +5,32 @@ export interface Position {
   col: number
 }
 export type GameStatus = 'playing' | 'won' | 'draw'
+
+export interface MoveRecord {
+  index: number
+  player: 'black' | 'white'
+  position: { row: number; col: number }
+  timestamp: number
+}
+
+export interface GameRecord {
+  id: string
+  version: 1
+  createdAt: string
+  boardSize: 15
+  gameMode: 'pvp' | 'ai'
+  aiDifficulty?: AIDifficulty
+  players: {
+    black: { name: string; isAI: boolean }
+    white: { name: string; isAI: boolean }
+  }
+  result: {
+    winner: 'black' | 'white' | 'draw' | null
+    winningCells?: Position[]
+  }
+  moves: MoveRecord[]
+}
+
 export interface GameState {
   board: Board
   currentPlayer: Player
@@ -14,6 +40,8 @@ export interface GameState {
   winningCells: Position[]
   settings: GameSettings
   isAIThinking: boolean
+  moveHistory: MoveRecord[]
+  gameStartTime: number
 }
 export type GameAction =
   | { type: 'MOVE'; row: number; col: number }
@@ -21,6 +49,7 @@ export type GameAction =
   | { type: 'SET_MODE'; mode: GameMode; aiDifficulty?: AIDifficulty }
   | { type: 'SET_AI_THINKING'; isThinking: boolean }
   | { type: 'AI_MOVE'; row: number; col: number }
+  | { type: 'UNDO' }
 export const BOARD_SIZE = 15
 /** 游戏模式 */
 export type GameMode = 'pvp' | 'ai'
