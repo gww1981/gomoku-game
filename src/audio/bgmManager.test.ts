@@ -1,14 +1,46 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createBGMManager } from './bgmManager'
 
-function deferred<T>() {
-  let resolve!: (value: T) => void
-  let reject!: (reason?: unknown) => void
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res
-    reject = rej
-  })
-  return { promise, resolve, reject }
+const heldAudioLoads = new Set<string>()
+const failedAudioLoads = new Set<string>()
+
+class MockAudioElement {
+  static instances: MockAudioElement[] = []
+
+  src: string
+  loop = false
+  preload = ''
+  volume = 1
+  play = vi.fn(async () => {})
+  pause = vi.fn()
+  private listeners = new Map<string, Array<() => void>>()
+
+  constructor(src: string) {
+    this.src = src
+    MockAudioElement.instances.push(this)
+  }
+
+  addEventListener(event: string, callback: () => void) {
+    const callbacks = this.listeners.get(event) ?? []
+    callbacks.push(callback)
+    this.listeners.set(event, callbacks)
+  }
+
+  load() {
+    if (failedAudioLoads.has(this.src)) {
+      this.dispatch('error')
+      return
+    }
+    if (!heldAudioLoads.has(this.src)) {
+      this.dispatch('canplaythrough')
+    }
+  }
+
+  dispatch(event: string) {
+    for (const callback of this.listeners.get(event) ?? []) {
+      callback()
+    }
+  }
 }
 
 function createMockAudioContext() {
@@ -62,9 +94,13 @@ describe('createBGMManager', () => {
         .mockReturnValue('blob:custom-track'),
       revokeObjectURL: vi.fn(),
     })
+    vi.stubGlobal('Audio', MockAudioElement)
   })
 
   afterEach(() => {
+    MockAudioElement.instances = []
+    heldAudioLoads.clear()
+    failedAudioLoads.clear()
     vi.clearAllTimers()
     vi.useRealTimers()
     vi.restoreAllMocks()
@@ -89,26 +125,26 @@ describe('createBGMManager', () => {
     const manager = createBGMManager({ onLoadingChange })
 
     manager.start(ctx)
-    await manager.switchTrack('shanshui')
+    await manager.switchTrack('preset-1')
 
-    expect(fetch).toHaveBeenCalledWith('/audio/shanshui.mp3')
-    expect(ctx.decodeAudioData).toHaveBeenCalled()
-    expect(manager.getCurrentTrack().id).toBe('shanshui')
+    expect(fetch).not.toHaveBeenCalled()
+    expect(ctx.decodeAudioData).not.toHaveBeenCalled()
+    expect(manager.getCurrentTrack().id).toBe('preset-1')
+    expect(MockAudioElement.instances.at(-1)?.play).toHaveBeenCalled()
     expect(onLoadingChange).toHaveBeenCalledWith(true)
     expect(onLoadingChange).toHaveBeenLastCalledWith(false)
     manager.dispose()
   })
 
   it('clears loading when switching back to synthetic during a pending file load', async () => {
-    const pendingResponse = deferred<Response>()
-    vi.stubGlobal('fetch', vi.fn(() => pendingResponse.promise))
+    heldAudioLoads.add('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3')
     const MockAudioContext = createMockAudioContext()
     const ctx = new MockAudioContext() as unknown as AudioContext
     const onLoadingChange = vi.fn()
     const manager = createBGMManager({ onLoadingChange })
 
     manager.start(ctx)
-    const pendingSwitch = manager.switchTrack('shanshui')
+    const pendingSwitch = manager.switchTrack('preset-1')
     await Promise.resolve()
     expect(onLoadingChange).toHaveBeenLastCalledWith(true)
 
@@ -116,10 +152,7 @@ describe('createBGMManager', () => {
     expect(manager.getCurrentTrack().id).toBe('synthetic')
     expect(onLoadingChange).toHaveBeenLastCalledWith(false)
 
-    pendingResponse.resolve({
-      ok: true,
-      arrayBuffer: async () => new ArrayBuffer(8),
-    } as Response)
+    MockAudioElement.instances.find((audio) => audio.src.includes('SoundHelix-Song-1'))?.dispatch('canplaythrough')
     await pendingSwitch
     expect(manager.getCurrentTrack().id).toBe('synthetic')
     expect(onLoadingChange).toHaveBeenLastCalledWith(false)
@@ -127,14 +160,7 @@ describe('createBGMManager', () => {
   })
 
   it('does not let a stale file load replace the active file engine buffer', async () => {
-    const slowResponse = deferred<Response>()
-    vi.stubGlobal('fetch', vi.fn((source: string) => {
-      if (source.includes('shanshui')) return slowResponse.promise
-      return Promise.resolve({
-        ok: true,
-        arrayBuffer: async () => new ArrayBuffer(22),
-      })
-    }))
+    heldAudioLoads.add('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3')
     class MockAudioContext {
       destination = Symbol('destination')
       currentTime = 1
@@ -174,34 +200,31 @@ describe('createBGMManager', () => {
     const manager = createBGMManager()
 
     manager.start(ctx)
-    const slowSwitch = manager.switchTrack('shanshui')
+    const slowSwitch = manager.switchTrack('preset-1')
     await Promise.resolve()
-    await manager.switchTrack('zhulin')
+    await manager.switchTrack('preset-2')
 
-    slowResponse.resolve({
-      ok: true,
-      arrayBuffer: async () => new ArrayBuffer(11),
-    } as Response)
+    MockAudioElement.instances.find((audio) => audio.src.includes('SoundHelix-Song-1'))?.dispatch('canplaythrough')
     await slowSwitch
 
-    expect(manager.getCurrentTrack().id).toBe('zhulin')
+    expect(manager.getCurrentTrack().id).toBe('preset-2')
     manager.stop()
     manager.start(ctx)
     await Promise.resolve()
     await Promise.resolve()
-    expect(ctx.startedBuffers.at(-1)).toEqual({ label: 22 })
+    expect(MockAudioElement.instances.find((audio) => audio.src.includes('SoundHelix-Song-2'))?.play).toHaveBeenCalled()
     manager.dispose()
   })
 
   it('falls back to synthetic when a network track fails', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false })))
+    failedAudioLoads.add('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3')
     const MockAudioContext = createMockAudioContext()
     const ctx = new MockAudioContext() as unknown as AudioContext
     const onError = vi.fn()
     const manager = createBGMManager({ onError })
 
     manager.start(ctx)
-    await manager.switchTrack('zhulin')
+    await manager.switchTrack('preset-2')
 
     expect(manager.getCurrentTrack().id).toBe('synthetic')
     expect(onError).toHaveBeenCalledWith('网络音频加载失败，已切换回合成BGM')

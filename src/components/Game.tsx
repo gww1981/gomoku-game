@@ -30,11 +30,14 @@ export function Game() {
   const [replayOpen, setReplayOpen] = useState(false)
   const [isReplayMode, setIsReplayMode] = useState(false)
   const replay = useReplay()
+  const { loadRecord } = replay
+  const { playSFX, resumeBGM, stopBGM } = audio
+  const savedTerminalGameRef = useRef<string | null>(null)
 
   const handleModeSelect = useCallback((mode: GameMode, aiDifficulty?: AIDifficulty) => {
     dispatch({ type: 'SET_MODE', mode, aiDifficulty })
-    audio.playSFX('click')
-  }, [audio])
+    playSFX('click')
+  }, [playSFX])
 
   const handleCellClick = useCallback((row: number, col: number) => {
     if (state.status !== 'playing') return
@@ -42,13 +45,13 @@ export function Game() {
     if (state.settings.mode === 'ai' && state.currentPlayer !== 'black') return
 
     dispatch({ type: 'MOVE', row, col })
-    audio.playSFX('move')
-  }, [state.status, state.isAIThinking, state.settings.mode, state.currentPlayer, audio])
+    playSFX('move')
+  }, [state.status, state.isAIThinking, state.settings.mode, state.currentPlayer, playSFX])
 
   const handleUndo = useCallback(() => {
     dispatch({ type: 'UNDO' })
-    audio.playSFX('move')
-  }, [audio])
+    playSFX('move')
+  }, [playSFX])
 
   const handleOpenReplayList = useCallback(() => {
     setReplayOpen(true)
@@ -59,12 +62,13 @@ export function Game() {
   }, [])
 
   const handleSelectRecord = useCallback((record: import('../game/types').GameRecord) => {
-    replay.loadRecord(record)
+    loadRecord(record)
     setIsReplayMode(true)
     setReplayOpen(false)
-  }, [replay])
+  }, [loadRecord])
 
   const handleExitReplay = useCallback(() => {
+    savedTerminalGameRef.current = null
     setIsReplayMode(false)
     dispatch({ type: 'RESET' })
   }, [])
@@ -72,6 +76,10 @@ export function Game() {
   // Save game record when game ends and enter replay mode
   useEffect(() => {
     if ((state.status === 'won' || state.status === 'draw') && state.moveHistory.length > 0) {
+      const terminalGameKey = `${state.status}:${state.moveHistory.length}`
+      if (savedTerminalGameRef.current === terminalGameKey) return
+      savedTerminalGameRef.current = terminalGameKey
+
       const record: import('../game/types').GameRecord = {
         id: crypto.randomUUID(),
         version: 1,
@@ -90,10 +98,10 @@ export function Game() {
         moves: state.moveHistory,
       }
       saveGameRecord(record)
-      replay.loadRecord(record)
+      loadRecord(record)
       setIsReplayMode(true)
     }
-  }, [state.status, state.moveHistory, state.winner, state.winningCells, state.settings, replay])
+  }, [state.status, state.moveHistory, state.winner, state.winningCells, state.settings, loadRecord])
 
   useEffect(() => {
     if (state.status !== 'playing') return
@@ -114,7 +122,7 @@ export function Game() {
       const decision = getAIMove(state.board, 'white', state.settings.aiDifficulty)
       if (decision) {
         dispatch({ type: 'AI_MOVE', row: decision.row, col: decision.col })
-        audio.playSFX('move')
+        playSFX('move')
       }
     }, AI_THINKING_DELAY)
 
@@ -126,37 +134,38 @@ export function Game() {
     state.currentPlayer,
     state.isAIThinking,
     state.board,
-    audio,
+    playSFX,
   ])
 
   useEffect(() => {
     if (prevStatusRef.current === 'playing' && state.status === 'won') {
-      audio.playSFX('win')
+      playSFX('win')
     } else if (prevStatusRef.current === 'playing' && state.status === 'draw') {
-      audio.playSFX('draw')
+      playSFX('draw')
     }
     prevStatusRef.current = state.status
-  }, [state.status, audio])
+  }, [state.status, playSFX])
 
   useEffect(() => {
     if (!prevAIThinkingRef.current && state.isAIThinking) {
-      audio.playSFX('thinking')
+      playSFX('thinking')
     }
     prevAIThinkingRef.current = state.isAIThinking
-  }, [state.isAIThinking, audio])
+  }, [state.isAIThinking, playSFX])
 
   useEffect(() => {
     if (state.status === 'playing') {
-      audio.resumeBGM()
+      resumeBGM()
     } else {
-      audio.stopBGM()
+      stopBGM()
     }
-  }, [state.status, audio])
+  }, [state.status, resumeBGM, stopBGM])
 
   const handleReset = useCallback(() => {
+    savedTerminalGameRef.current = null
     dispatch({ type: 'RESET' })
-    audio.playSFX('click')
-  }, [audio])
+    playSFX('click')
+  }, [playSFX])
 
   const modeLabel = state.settings.mode === 'pvp'
     ? '双人'
@@ -182,7 +191,7 @@ export function Game() {
             onCellClick={isReplayMode ? () => {} : handleCellClick}
             lastMove={isReplayMode ? (replay.state.moves[replay.state.currentIndex]?.position ?? null) : state.lastMove}
             winningCells={isReplayMode ? [] : state.winningCells || []}
-            moveNumbers={replay.state.moves.map((m, i) => ({ row: m.position.row, col: m.position.col, number: m.index }))}
+            moveNumbers={replay.state.moves.map((m) => ({ row: m.position.row, col: m.position.col, number: m.index }))}
             currentMoveIndex={replay.state.currentIndex}
           />
         </div>

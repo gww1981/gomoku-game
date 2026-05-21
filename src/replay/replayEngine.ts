@@ -1,5 +1,5 @@
 import type { Board } from '../game/types'
-import type { MoveRecord, GameRecord } from '../game/types'
+import type { MoveRecord } from '../game/types'
 import { createEmptyBoard } from '../game/gameLogic'
 import type { ReplayAction } from './types'
 

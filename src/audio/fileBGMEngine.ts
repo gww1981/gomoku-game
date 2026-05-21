@@ -13,6 +13,7 @@ export function createFileBGMEngine(audioCtx: AudioContext): FileBGMEngine {
 
   let sourceNode: AudioBufferSourceNode | null = null
   let audioBuffer: AudioBuffer | null = null
+  let audioElement: HTMLAudioElement | null = null
   let targetVolume = 0.5
   let isPlaying = false
 
@@ -35,6 +36,22 @@ export function createFileBGMEngine(audioCtx: AudioContext): FileBGMEngine {
   }
 
   async function load(source: string) {
+    if (source.startsWith('http://') || source.startsWith('https://')) {
+      audioBuffer = null
+      const nextAudio = new Audio(source)
+      nextAudio.loop = true
+      nextAudio.preload = 'auto'
+      nextAudio.volume = targetVolume
+      await new Promise<void>((resolve, reject) => {
+        nextAudio.addEventListener('canplaythrough', () => resolve(), { once: true })
+        nextAudio.addEventListener('error', () => reject(new Error('Failed to load BGM file')), { once: true })
+        nextAudio.load()
+      })
+      audioElement = nextAudio
+      return
+    }
+
+    audioElement = null
     const response = await fetch(source)
     if (!response.ok) {
       throw new Error('Failed to load BGM file')
@@ -44,6 +61,14 @@ export function createFileBGMEngine(audioCtx: AudioContext): FileBGMEngine {
   }
 
   function start() {
+    if (audioElement) {
+      if (isPlaying) return
+      audioElement.volume = targetVolume
+      void audioElement.play()
+      isPlaying = true
+      return
+    }
+
     if (!audioBuffer || isPlaying) return
     const nextSource = audioCtx.createBufferSource()
     nextSource.buffer = audioBuffer
@@ -58,6 +83,12 @@ export function createFileBGMEngine(audioCtx: AudioContext): FileBGMEngine {
 
   function stop() {
     if (!isPlaying) return
+    if (audioElement) {
+      audioElement.pause()
+      isPlaying = false
+      return
+    }
+
     fadeTo(0)
     stopSource()
     isPlaying = false
@@ -65,6 +96,9 @@ export function createFileBGMEngine(audioCtx: AudioContext): FileBGMEngine {
 
   function setVolume(v: number) {
     targetVolume = Math.max(0, Math.min(1, v))
+    if (audioElement) {
+      audioElement.volume = targetVolume
+    }
     if (isPlaying) {
       fadeTo(targetVolume)
     }

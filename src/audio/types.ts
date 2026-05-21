@@ -2,7 +2,8 @@
 
 export type SFXName = 'move' | 'win' | 'draw' | 'thinking' | 'click'
 
-export type BGMTrackId = 'synthetic' | 'shanshui' | 'zhulin' | 'yuexia' | 'custom'
+export type PresetBGMTrackId = 'preset-1' | 'preset-2' | 'preset-3' | 'preset-4' | 'preset-5'
+export type BGMTrackId = 'synthetic' | PresetBGMTrackId | 'custom'
 
 interface BaseBGMTrack {
   id: BGMTrackId
