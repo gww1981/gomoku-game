@@ -1,0 +1,86 @@
+.chat-panel {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-quick-messages {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.chat-quick-btn {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--color-surface, #1a1a2e);
+  color: var(--color-text, #e0e0e0);
+  border: 1px solid var(--color-border, #333);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.chat-quick-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.chat-history-toggle {
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary, #888);
+  border: 1px solid var(--color-border, #333);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.chat-history {
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.chat-empty {
+  color: var(--color-text-secondary, #888);
+  font-style: italic;
+  text-align: center;
+}
+
+.chat-msg { padding: 2px 0; }
+.chat-label-me { color: #5dade2; font-weight: bold; }
+.chat-label-opp { color: #ce93d8; font-weight: bold; }
+
+.chat-bubble {
+  position: fixed;
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-size: 13px;
+  animation: fadeIn 0.3s;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.chat-bubble.me {
+  background: #1a5276;
+  color: #5dade2;
+  top: 18%;
+  right: 18%;
+}
+
+.chat-bubble.opponent {
+  background: #4a148c;
+  color: #ce93d8;
+  bottom: 18%;
+  left: 18%;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
