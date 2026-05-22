@@ -50,6 +50,7 @@ export function getInitialGameState(): GameState {
     },
     isAIThinking: false,
     moveHistory: [],
+    lanState: null,
     gameStartTime: Date.now(),
   }
 }
@@ -90,6 +91,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         winningCells: [],
         status: 'playing',
         winner: null,
+        lanState: state.lanState ? { ...state.lanState, undoRequested: false } : null,
       }
     }
 
@@ -162,6 +164,71 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         lastMove: { row: action.row, col: action.col },
         winningCells: newWinningCells,
         moveHistory: [...state.moveHistory, newMoveRecord],
+      }
+    }
+
+    default:
+      return handleLanAction(state, action)
+  }
+}
+
+function handleLanAction(state: GameState, action: GameAction): GameState {
+  switch (action.type) {
+    case 'SET_LAN_STATE': {
+      const prev = state.lanState ?? {
+        myColor: 'black' as Player,
+        roomId: '',
+        opponentConnected: false,
+        undoRequested: false,
+      }
+      return {
+        ...state,
+        lanState: { ...prev, ...action.lanState },
+      }
+    }
+
+    case 'OPPONENT_MOVE': {
+      if (state.status !== 'playing') return state
+      if (!canPlacePiece(state.board, action.row, action.col)) return state
+
+      const newBoard = state.board.map(r => [...r])
+      newBoard[action.row][action.col] = state.currentPlayer
+      const won = checkWin(newBoard, action.row, action.col, state.currentPlayer)
+      const newWinningCells = won ? getWinningCells(newBoard, action.row, action.col, state.currentPlayer) : []
+
+      return {
+        ...state,
+        board: newBoard,
+        currentPlayer: won ? state.currentPlayer : (state.currentPlayer === 'black' ? 'white' : 'black') as Player,
+        status: won ? 'won' : 'playing',
+        winner: won ? state.currentPlayer : null,
+        lastMove: { row: action.row, col: action.col },
+        winningCells: newWinningCells,
+        moveHistory: [
+          ...state.moveHistory,
+          {
+            index: state.moveHistory.length + 1,
+            player: state.currentPlayer,
+            position: { row: action.row, col: action.col },
+            timestamp: Date.now() - state.gameStartTime,
+          },
+        ],
+      }
+    }
+
+    case 'OPPONENT_UNDO_REQUEST': {
+      if (!state.lanState) return state
+      return {
+        ...state,
+        lanState: { ...state.lanState, undoRequested: true },
+      }
+    }
+
+    case 'OPPONENT_LEFT': {
+      if (!state.lanState) return state
+      return {
+        ...state,
+        lanState: { ...state.lanState, opponentConnected: false },
       }
     }
 
