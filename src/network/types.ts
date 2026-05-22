@@ -8,6 +8,7 @@ export type ServerEvent =
   | 'opponent-disconnected'
   | 'opponent-reconnected'
   | 'opponent-timeout'
+  | 'opponent-left'
 
 export type ClientEvent =
   | 'create-room'
@@ -18,6 +19,7 @@ export type ClientEvent =
   | 'chat'
   | 'resign'
   | 'reconnect'
+  | 'leave-room'
 
 export interface OpponentMovePayload {
   row: number
