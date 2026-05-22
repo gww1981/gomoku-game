@@ -9,7 +9,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "server": "npm --prefix server run dev",
+    "server:install": "npm --prefix server install",
+    "server:test": "npm --prefix server test",
+    "dev:all": "npx concurrently -n web,server -c blue,green \"npm run dev\" \"npm run server\""
   },
   "dependencies": {
     "react": "^19.2.6",
@@ -24,6 +28,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.2.1",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
