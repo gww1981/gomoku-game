@@ -222,10 +222,10 @@
 
 .game-footer {
   display: grid;
-  grid-template-columns: auto minmax(180px, 1fr) auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 12px;
-  padding: clamp(12px, 2.4vw, 18px);
+  padding: clamp(8px, 1.5vw, 12px);
   border: 1px solid var(--panel-line);
   border-radius: 8px;
   background: var(--panel);
@@ -235,25 +235,27 @@
 
 .mode-badge,
 .status {
-  min-height: 44px;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(201, 168, 108, 0.18);
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(20, 13, 9, 0.44);
   color: var(--text-secondary);
 }
 
 .mode-badge {
-  padding: 0 14px;
+  padding: 0 12px;
   white-space: nowrap;
+  font-size: 12px;
 }
 
 .status {
-  padding: 0 18px;
+  padding: 0 16px;
   font-weight: 650;
   text-align: center;
+  color: var(--accent-gold-bright);
 }
 
 .status.won {
@@ -272,7 +274,7 @@
 }
 
 .reset-button {
-  padding: 0 18px;
+  padding: 0 16px;
   color: var(--text-primary);
   animation: fadeSlideUp 260ms ease-out;
 }

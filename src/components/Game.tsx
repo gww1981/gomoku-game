@@ -43,13 +43,18 @@ export function Game() {
   const savedTerminalGameRef = useRef<string | null>(null)
 
   const handleModeSelect = useCallback((mode: GameMode, aiDifficulty?: AIDifficulty) => {
+    // 如果正在录像播放，退出录像模式
+    if (isReplayMode) {
+      setIsReplayMode(false)
+      savedTerminalGameRef.current = null
+    }
     // 离开 LAN 模式或切换到不同模式时清理网络房间状态
     if (state.settings.mode === 'lan' && mode !== 'lan' && state.lanState) {
       network.leaveRoom()
     }
     dispatch({ type: 'SET_MODE', mode, aiDifficulty })
     playSFX('click')
-  }, [state.settings.mode, state.lanState, network, playSFX])
+  }, [state.settings.mode, state.lanState, isReplayMode, network, playSFX])
 
   const handleCellClick = useCallback((row: number, col: number) => {
     if (state.status !== 'playing') return
