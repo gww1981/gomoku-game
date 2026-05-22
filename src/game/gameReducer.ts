@@ -68,7 +68,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (state.moveHistory.length === 0) return state
       if (state.isAIThinking) return state
 
-      const stepsToUndo = state.settings.mode === 'ai' ? 2 : 1
+      let stepsToUndo: number
+      if (state.settings.mode === 'ai') {
+        stepsToUndo = 2
+      } else if (state.settings.mode === 'lan' && action.requestedBy) {
+        // LAN 模式撤回到"最近一手属于请求方"的那步之前
+        const history = state.moveHistory
+        const lastMover = history[history.length - 1].player
+        stepsToUndo = lastMover === action.requestedBy ? 1 : 2
+      } else {
+        stepsToUndo = 1
+      }
       const actualSteps = Math.min(stepsToUndo, state.moveHistory.length)
       const newHistory = state.moveHistory.slice(0, -actualSteps)
 
@@ -229,6 +239,17 @@ function handleLanAction(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         lanState: { ...state.lanState, opponentConnected: false },
+      }
+    }
+
+    case 'RESIGN': {
+      if (state.status !== 'playing') return state
+      const winner: Player = action.resignedBy === 'black' ? 'white' : 'black'
+      return {
+        ...state,
+        status: 'won',
+        winner,
+        winningCells: [],
       }
     }
 

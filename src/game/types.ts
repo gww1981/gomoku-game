@@ -57,11 +57,12 @@ export type GameAction =
   | { type: 'SET_MODE'; mode: GameMode; aiDifficulty?: AIDifficulty }
   | { type: 'SET_AI_THINKING'; isThinking: boolean }
   | { type: 'AI_MOVE'; row: number; col: number }
-  | { type: 'UNDO' }
+  | { type: 'UNDO'; requestedBy?: Player }
   | { type: 'SET_LAN_STATE'; lanState: Partial<LanState> }
   | { type: 'OPPONENT_MOVE'; row: number; col: number }
   | { type: 'OPPONENT_UNDO_REQUEST' }
   | { type: 'OPPONENT_LEFT' }
+  | { type: 'RESIGN'; resignedBy: Player }
 export const BOARD_SIZE = 15
 /** 游戏模式 */
 export type GameMode = 'pvp' | 'ai' | 'lan'

@@ -1,18 +1,21 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { networkManager } from './networkManager'
-import type { GameAction } from '../game/types'
+import type { GameAction, Player } from '../game/types'
 
-const DEFAULT_SERVER_URL = (() => {
-  const hostname = window.location.hostname
-  return `http://${hostname}:3001`
-})()
+function getDefaultServerUrl(): string {
+  if (typeof window === 'undefined') return 'http://localhost:3001'
+  return `http://${window.location.hostname}:3001`
+}
 
 export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
   const dispatchRef = useRef(dispatch)
   dispatchRef.current = dispatch
+  const myColorRef = useRef<Player | null>(null)
 
+  // 仅在 mount 时建立一次连接；dispatch 通过 ref 访问，避免重连
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    networkManager.connect(DEFAULT_SERVER_URL)
+    networkManager.connect(getDefaultServerUrl())
     networkManager.setHandlers({
       onGameStart: () => {
         dispatchRef.current({
@@ -27,17 +30,23 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
         dispatchRef.current({ type: 'OPPONENT_UNDO_REQUEST' })
       },
       onUndoResponded: ({ accepted }) => {
-        if (accepted) {
-          dispatchRef.current({ type: 'UNDO' })
+        if (accepted && myColorRef.current) {
+          // 对方同意了我的悔棋请求 → 撤回我的最近一手
+          dispatchRef.current({ type: 'UNDO', requestedBy: myColorRef.current })
         }
         dispatchRef.current({
           type: 'SET_LAN_STATE',
           lanState: { undoRequested: false },
         })
       },
+      // chat 由 ChatPanel 通过 subscribeChat 单独订阅
       onOpponentChat: () => {},
       onOpponentResigned: () => {
-        dispatchRef.current({ type: 'OPPONENT_LEFT' })
+        // 对方认输 → 我赢
+        if (myColorRef.current) {
+          const opponentColor: Player = myColorRef.current === 'black' ? 'white' : 'black'
+          dispatchRef.current({ type: 'RESIGN', resignedBy: opponentColor })
+        }
       },
       onOpponentDisconnected: () => {
         dispatchRef.current({
@@ -52,7 +61,11 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
         })
       },
       onOpponentTimeout: () => {
-        dispatchRef.current({ type: 'OPPONENT_LEFT' })
+        // 对方超时 → 判我赢
+        if (myColorRef.current) {
+          const opponentColor: Player = myColorRef.current === 'black' ? 'white' : 'black'
+          dispatchRef.current({ type: 'RESIGN', resignedBy: opponentColor })
+        }
       },
     })
     return () => {
@@ -63,6 +76,7 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
 
   const createRoom = useCallback(async () => {
     const roomId = await networkManager.createRoom()
+    myColorRef.current = 'black'
     dispatch({
       type: 'SET_LAN_STATE',
       lanState: {
@@ -78,6 +92,7 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
   const joinRoom = useCallback(async (roomId: string) => {
     const result = await networkManager.joinRoom(roomId)
     if (result.success) {
+      myColorRef.current = 'white'
       dispatch({
         type: 'SET_LAN_STATE',
         lanState: {
@@ -91,22 +106,57 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
     return result
   }, [dispatch])
 
-  const sendMove = useCallback((row: number, col: number, player: 'black' | 'white') => {
+  const sendMove = useCallback((row: number, col: number, player: Player) => {
     networkManager.sendMove(row, col, player)
   }, [])
 
   const requestUndo = useCallback(() => networkManager.requestUndo(), [])
 
-  const respondUndo = useCallback((accepted: boolean) => {
-    networkManager.respondUndo(accepted)
-    dispatch({
-      type: 'SET_LAN_STATE',
-      lanState: { undoRequested: false },
-    })
-  }, [dispatch])
+  const respondUndo = useCallback(
+    (accepted: boolean) => {
+      networkManager.respondUndo(accepted)
+      if (accepted) {
+        // 同意悔棋：本地也要撤回到请求方（对方）最近一手之前
+        const opponentColor: Player =
+          myColorRef.current === 'black' ? 'white' : 'black'
+        dispatch({ type: 'UNDO', requestedBy: opponentColor })
+      }
+      dispatch({
+        type: 'SET_LAN_STATE',
+        lanState: { undoRequested: false },
+      })
+    },
+    [dispatch]
+  )
 
   const sendChat = useCallback((message: string) => networkManager.sendChat(message), [])
-  const resign = useCallback(() => networkManager.resign(), [])
 
-  return { createRoom, joinRoom, sendMove, requestUndo, respondUndo, sendChat, resign }
+  const subscribeChat = useCallback(
+    (cb: (message: string) => void) => networkManager.subscribeChat(cb),
+    []
+  )
+
+  const resign = useCallback(() => {
+    networkManager.resign()
+    if (myColorRef.current) {
+      dispatch({ type: 'RESIGN', resignedBy: myColorRef.current })
+    }
+  }, [dispatch])
+
+  const leaveRoom = useCallback(() => {
+    networkManager.clearRoom()
+    myColorRef.current = null
+  }, [])
+
+  return {
+    createRoom,
+    joinRoom,
+    sendMove,
+    requestUndo,
+    respondUndo,
+    sendChat,
+    subscribeChat,
+    resign,
+    leaveRoom,
+  }
 }

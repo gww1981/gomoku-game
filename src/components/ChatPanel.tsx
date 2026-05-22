@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { networkManager } from '../network/networkManager'
 import './ChatPanel.css'
 
 const QUICK_MESSAGES = ['好棋', '请等一下', '幸运的一步', '让我想想', '再来一局', '我要走了']
@@ -9,7 +8,12 @@ interface ChatMessage {
   text: string
 }
 
-export function ChatPanel() {
+interface ChatPanelProps {
+  sendChat: (message: string) => void
+  subscribeChat: (cb: (message: string) => void) => () => void
+}
+
+export function ChatPanel({ sendChat, subscribeChat }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [showHistory, setShowHistory] = useState(false)
   const [bubble, setBubble] = useState<{ from: 'me' | 'opponent'; text: string } | null>(null)
@@ -22,7 +26,7 @@ export function ChatPanel() {
   }, [])
 
   useEffect(() => {
-    const unsubscribe = networkManager.subscribeChat((message: string) => {
+    const unsubscribe = subscribeChat((message: string) => {
       setMessages((prev) => [...prev, { from: 'opponent', text: message }])
       showBubble('opponent', message)
     })
@@ -30,15 +34,15 @@ export function ChatPanel() {
       unsubscribe()
       if (bubbleTimer.current) clearTimeout(bubbleTimer.current)
     }
-  }, [showBubble])
+  }, [subscribeChat, showBubble])
 
   const handleSend = useCallback(
     (message: string) => {
-      networkManager.sendChat(message)
+      sendChat(message)
       setMessages((prev) => [...prev, { from: 'me', text: message }])
       showBubble('me', message)
     },
-    [showBubble]
+    [sendChat, showBubble]
   )
 
   return (

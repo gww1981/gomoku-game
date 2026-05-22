@@ -97,7 +97,6 @@ export function createRoomManager() {
       const room = rooms.get(roomId)
       if (!room || room.disconnectedAt === null) return null
       if (Date.now() - room.disconnectedAt > RECONNECT_TIMEOUT) {
-        const disconnectedPlayer = room.disconnectedAt ? 'timeout' : null
         room.status = 'finished'
         return room
       }

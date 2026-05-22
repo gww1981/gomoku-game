@@ -15,8 +15,14 @@ export function Lobby({ onCreateRoom, onJoinRoom }: LobbyProps) {
 
   const handleCreate = useCallback(async () => {
     setView('creating')
-    const id = await onCreateRoom()
-    setCreatedRoomId(id)
+    setJoinError('')
+    try {
+      const id = await onCreateRoom()
+      setCreatedRoomId(id)
+    } catch (err) {
+      setJoinError(err instanceof Error ? err.message : '创建失败，请检查服务端是否启动')
+      setView('select')
+    }
   }, [onCreateRoom])
 
   const handleCopyRoomId = useCallback(() => {
@@ -26,10 +32,15 @@ export function Lobby({ onCreateRoom, onJoinRoom }: LobbyProps) {
   const handleJoin = useCallback(async () => {
     setJoinError('')
     setJoining(true)
-    const result = await onJoinRoom(roomId.toUpperCase())
-    setJoining(false)
-    if (!result.success) {
-      setJoinError(result.error || '加入失败')
+    try {
+      const result = await onJoinRoom(roomId.toUpperCase())
+      if (!result.success) {
+        setJoinError(result.error || '加入失败')
+      }
+    } catch (err) {
+      setJoinError(err instanceof Error ? err.message : '加入失败，请检查服务端是否启动')
+    } finally {
+      setJoining(false)
     }
   }, [roomId, onJoinRoom])
 
@@ -106,6 +117,7 @@ export function Lobby({ onCreateRoom, onJoinRoom }: LobbyProps) {
           <button type="button" className="lobby-action-btn">加入</button>
         </div>
       </div>
+      {joinError && <p className="lobby-error">{joinError}</p>}
     </div>
   )
 }

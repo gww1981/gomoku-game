@@ -43,9 +43,13 @@ export function Game() {
   const savedTerminalGameRef = useRef<string | null>(null)
 
   const handleModeSelect = useCallback((mode: GameMode, aiDifficulty?: AIDifficulty) => {
+    // 离开 LAN 模式或切换到不同模式时清理网络房间状态
+    if (state.settings.mode === 'lan' && mode !== 'lan' && state.lanState) {
+      network.leaveRoom()
+    }
     dispatch({ type: 'SET_MODE', mode, aiDifficulty })
     playSFX('click')
-  }, [playSFX])
+  }, [state.settings.mode, state.lanState, network, playSFX])
 
   const handleCellClick = useCallback((row: number, col: number) => {
     if (state.status !== 'playing') return
@@ -185,9 +189,15 @@ export function Game() {
 
   const handleReset = useCallback(() => {
     savedTerminalGameRef.current = null
-    dispatch({ type: 'RESET' })
+    // LAN 模式下重新开始 → 离开房间回到大厅
+    if (state.settings.mode === 'lan') {
+      network.leaveRoom()
+      dispatch({ type: 'SET_MODE', mode: 'lan' })
+    } else {
+      dispatch({ type: 'RESET' })
+    }
     playSFX('click')
-  }, [playSFX])
+  }, [state.settings.mode, network, playSFX])
 
   const modeLabel = state.settings.mode === 'pvp'
     ? '双人'
@@ -200,9 +210,8 @@ export function Game() {
     (!state.lanState || (!state.lanState.opponentConnected && state.moveHistory.length === 0))
 
   const handleResignConfirm = useCallback(() => {
-    network.resign()
     setShowResignDialog(false)
-    dispatch({ type: 'OPPONENT_LEFT' })
+    network.resign()
   }, [network])
 
   return (
@@ -287,7 +296,7 @@ export function Game() {
         </footer>
         {state.settings.mode === 'lan' && state.lanState?.opponentConnected && state.status === 'playing' && (
           <div className="lan-chat-area">
-            <ChatPanel />
+            <ChatPanel sendChat={network.sendChat} subscribeChat={network.subscribeChat} />
           </div>
         )}
       </section>
