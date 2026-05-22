@@ -23,7 +23,6 @@ export type NetworkEventHandlers = {
 export class NetworkManager {
   private socket: Socket | null = null
   private roomId: string | null = null
-  private handlers: NetworkEventHandlers | null = null
   private chatListeners: Set<(message: string) => void> = new Set()
 
   connect(serverUrl: string): void {
@@ -44,7 +43,6 @@ export class NetworkManager {
 
   setHandlers(handlers: NetworkEventHandlers): void {
     this.removeHandlers()
-    this.handlers = handlers
     if (!this.socket) return
 
     this.socket.on('game-start', handlers.onGameStart)
@@ -72,7 +70,6 @@ export class NetworkManager {
     this.socket.off('opponent-disconnected')
     this.socket.off('opponent-reconnected')
     this.socket.off('opponent-timeout')
-    this.handlers = null
   }
 
   subscribeChat(cb: (message: string) => void): () => void {
