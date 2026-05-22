@@ -30,6 +30,13 @@ export function ModeSelect({ mode, aiDifficulty, onSelect }: ModeSelectProps) {
         >
           AI 对战
         </button>
+        <button
+          type="button"
+          aria-pressed={mode === 'lan'}
+          onClick={() => onSelect('lan')}
+        >
+          局域网对战
+        </button>
       </div>
       <div className="mode-group">
         {difficultyOptions.map((option) => (

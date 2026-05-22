@@ -22,6 +22,15 @@ export function Status({ gameState }: StatusProps) {
     )
   }
 
+  if (gameState.settings.mode === 'lan' && gameState.lanState) {
+    const isMyTurn = gameState.lanState.myColor === gameState.currentPlayer
+    return (
+      <div className="status">
+        {isMyTurn ? '你的回合' : '等待对方落子...'}
+      </div>
+    )
+  }
+
   const isAITurn = gameState.settings.mode === 'ai' && gameState.currentPlayer === 'white'
   const turnLabel = isAITurn
     ? '白棋 (AI)回合'
