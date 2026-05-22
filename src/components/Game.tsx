@@ -12,6 +12,12 @@ import { useReplay } from '../replay/useReplay'
 import { saveGameRecord } from '../replay/storage'
 import { ReplayBar } from './ReplayBar'
 import { GameRecordList } from './GameRecordList'
+import { Lobby } from './Lobby'
+import { NetworkStatus } from './NetworkStatus'
+import { ChatPanel } from './ChatPanel'
+import { UndoConfirmDialog } from './UndoConfirmDialog'
+import { ResignDialog } from './ResignDialog'
+import { useNetworkGame } from '../network/useNetworkGame'
 
 const AI_THINKING_DELAY = 400
 
@@ -24,6 +30,8 @@ const difficultyText: Record<AIDifficulty, string> = {
 export function Game() {
   const [state, dispatch] = useReducer(gameReducer, getInitialGameState())
   const audio = useAudio()
+  const network = useNetworkGame(dispatch)
+  const [showResignDialog, setShowResignDialog] = useState(false)
   const prevStatusRef = useRef(state.status)
   const prevAIThinkingRef = useRef(state.isAIThinking)
 
@@ -43,15 +51,29 @@ export function Game() {
     if (state.status !== 'playing') return
     if (state.isAIThinking) return
     if (state.settings.mode === 'ai' && state.currentPlayer !== 'black') return
+    if (state.settings.mode === 'lan') {
+      if (!state.lanState) return
+      if (!state.lanState.opponentConnected) return
+      if (state.currentPlayer !== state.lanState.myColor) return
+    }
 
     dispatch({ type: 'MOVE', row, col })
     playSFX('move')
-  }, [state.status, state.isAIThinking, state.settings.mode, state.currentPlayer, playSFX])
+
+    if (state.settings.mode === 'lan' && state.lanState) {
+      network.sendMove(row, col, state.lanState.myColor)
+    }
+  }, [state.status, state.isAIThinking, state.settings.mode, state.currentPlayer, state.lanState, playSFX, network])
 
   const handleUndo = useCallback(() => {
+    if (state.settings.mode === 'lan') {
+      network.requestUndo()
+      playSFX('click')
+      return
+    }
     dispatch({ type: 'UNDO' })
     playSFX('move')
-  }, [playSFX])
+  }, [state.settings.mode, network, playSFX])
 
   const handleOpenReplayList = useCallback(() => {
     setReplayOpen(true)
@@ -88,8 +110,8 @@ export function Game() {
         gameMode: state.settings.mode,
         aiDifficulty: state.settings.aiDifficulty,
         players: {
-          black: { name: '黑方', isAI: state.settings.mode === 'ai' },
-          white: { name: '白方', isAI: false },
+          black: { name: state.settings.mode === 'lan' ? '黑方玩家' : '黑方', isAI: false },
+          white: { name: state.settings.mode === 'lan' ? '白方玩家' : '白方', isAI: state.settings.mode === 'ai' },
         },
         result: {
           winner: state.winner,
@@ -169,7 +191,19 @@ export function Game() {
 
   const modeLabel = state.settings.mode === 'pvp'
     ? '双人'
+    : state.settings.mode === 'lan'
+    ? '局域网对战'
     : `人机对战 · ${difficultyText[state.settings.aiDifficulty]}`
+
+  const isLanLobbyView =
+    state.settings.mode === 'lan' &&
+    (!state.lanState || (!state.lanState.opponentConnected && state.moveHistory.length === 0))
+
+  const handleResignConfirm = useCallback(() => {
+    network.resign()
+    setShowResignDialog(false)
+    dispatch({ type: 'OPPONENT_LEFT' })
+  }, [network])
 
   return (
     <main className="game-shell">
@@ -186,14 +220,21 @@ export function Game() {
           />
         </header>
         <div className="board-stage">
-          <Board
-            board={isReplayMode ? replay.state.board : state.board}
-            onCellClick={isReplayMode ? () => {} : handleCellClick}
-            lastMove={isReplayMode ? (replay.state.moves[replay.state.currentIndex]?.position ?? null) : state.lastMove}
-            winningCells={isReplayMode ? [] : state.winningCells || []}
-            moveNumbers={replay.state.moves.map((m) => ({ row: m.position.row, col: m.position.col, number: m.index }))}
-            currentMoveIndex={replay.state.currentIndex}
-          />
+          {state.settings.mode === 'lan' && state.lanState && state.lanState.opponentConnected && (
+            <NetworkStatus lanState={state.lanState} currentPlayer={state.currentPlayer} />
+          )}
+          {isLanLobbyView ? (
+            <Lobby onCreateRoom={network.createRoom} onJoinRoom={network.joinRoom} />
+          ) : (
+            <Board
+              board={isReplayMode ? replay.state.board : state.board}
+              onCellClick={isReplayMode ? () => {} : handleCellClick}
+              lastMove={isReplayMode ? (replay.state.moves[replay.state.currentIndex]?.position ?? null) : state.lastMove}
+              winningCells={isReplayMode ? [] : state.winningCells || []}
+              moveNumbers={replay.state.moves.map((m) => ({ row: m.position.row, col: m.position.col, number: m.index }))}
+              currentMoveIndex={replay.state.currentIndex}
+            />
+          )}
         </div>
         <footer className="game-footer">
           <span className="mode-badge">{modeLabel}</span>
@@ -230,7 +271,12 @@ export function Game() {
               )}
               {state.status === 'playing' && state.moveHistory.length > 0 && (
                 <button type="button" className="undo-button" onClick={handleUndo}>
-                  悔棋
+                  {state.settings.mode === 'lan' ? '请求悔棋' : '悔棋'}
+                </button>
+              )}
+              {state.settings.mode === 'lan' && state.lanState?.opponentConnected && state.status === 'playing' && (
+                <button type="button" className="resign-button" onClick={() => setShowResignDialog(true)}>
+                  认输
                 </button>
               )}
               <button type="button" className="replay-list-button" onClick={handleOpenReplayList}>
@@ -239,6 +285,11 @@ export function Game() {
             </>
           )}
         </footer>
+        {state.settings.mode === 'lan' && state.lanState?.opponentConnected && state.status === 'playing' && (
+          <div className="lan-chat-area">
+            <ChatPanel />
+          </div>
+        )}
       </section>
       <AudioPanel />
       <GameRecordList
@@ -246,6 +297,18 @@ export function Game() {
         onClose={handleCloseReplayList}
         onSelectRecord={handleSelectRecord}
       />
+      {state.lanState?.undoRequested && (
+        <UndoConfirmDialog
+          onAccept={() => network.respondUndo(true)}
+          onReject={() => network.respondUndo(false)}
+        />
+      )}
+      {showResignDialog && (
+        <ResignDialog
+          onConfirm={handleResignConfirm}
+          onCancel={() => setShowResignDialog(false)}
+        />
+      )}
     </main>
   )
 }
