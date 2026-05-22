@@ -18,18 +18,37 @@ export type NetworkEventHandlers = {
   onOpponentDisconnected: () => void
   onOpponentReconnected: () => void
   onOpponentTimeout: () => void
+  onConnect: () => void
+  onDisconnect: (reason: string) => void
+  onConnectError: (error: Error) => void
 }
 
 export class NetworkManager {
   private socket: Socket | null = null
   private roomId: string | null = null
   private chatListeners: Set<(message: string) => void> = new Set()
+  private lifecycleHandlers: {
+    onConnect?: () => void
+    onDisconnect?: (reason: string) => void
+    onConnectError?: (error: Error) => void
+  } = {}
 
   connect(serverUrl: string): void {
     if (this.socket) {
       this.socket.disconnect()
     }
-    this.socket = io(serverUrl, { autoConnect: true, reconnection: false })
+    this.socket = io(serverUrl, {
+      autoConnect: true,
+      reconnection: false,
+      transports: ['websocket'],
+    })
+    this.socket.on('connect', () => this.lifecycleHandlers.onConnect?.())
+    this.socket.on('disconnect', (reason: string) =>
+      this.lifecycleHandlers.onDisconnect?.(reason)
+    )
+    this.socket.on('connect_error', (error: Error) =>
+      this.lifecycleHandlers.onConnectError?.(error)
+    )
   }
 
   disconnect(): void {
@@ -39,10 +58,16 @@ export class NetworkManager {
     }
     this.roomId = null
     this.chatListeners.clear()
+    this.lifecycleHandlers = {}
   }
 
   setHandlers(handlers: NetworkEventHandlers): void {
     this.removeHandlers()
+    this.lifecycleHandlers = {
+      onConnect: handlers.onConnect,
+      onDisconnect: handlers.onDisconnect,
+      onConnectError: handlers.onConnectError,
+    }
     if (!this.socket) return
 
     this.socket.on('game-start', handlers.onGameStart)
@@ -80,6 +105,7 @@ export class NetworkManager {
   async createRoom(): Promise<string> {
     return new Promise((resolve, reject) => {
       if (!this.socket) return reject(new Error('未连接'))
+      if (!this.socket.connected) return reject(new Error('未连接到服务器'))
       this.socket.emit('create-room', (response: { roomId: string }) => {
         this.roomId = response.roomId
         resolve(response.roomId)
@@ -90,6 +116,7 @@ export class NetworkManager {
   async joinRoom(roomId: string): Promise<JoinRoomResult> {
     return new Promise((resolve, reject) => {
       if (!this.socket) return reject(new Error('未连接'))
+      if (!this.socket.connected) return reject(new Error('未连接到服务器'))
       this.socket.emit('join-room', { roomId }, (response: JoinRoomResult) => {
         if (response.success) this.roomId = roomId
         resolve(response)

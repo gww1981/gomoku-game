@@ -4,9 +4,16 @@ import './Lobby.css'
 interface LobbyProps {
   onCreateRoom: () => Promise<string>
   onJoinRoom: (roomId: string) => Promise<{ success: boolean; error?: string }>
+  connectionStatus?: 'connecting' | 'connected' | 'error'
+  connectError?: string | null
 }
 
-export function Lobby({ onCreateRoom, onJoinRoom }: LobbyProps) {
+export function Lobby({
+  onCreateRoom,
+  onJoinRoom,
+  connectionStatus = 'connected',
+  connectError = null,
+}: LobbyProps) {
   const [view, setView] = useState<'select' | 'creating' | 'joining'>('select')
   const [roomId, setRoomId] = useState('')
   const [createdRoomId, setCreatedRoomId] = useState('')
@@ -105,16 +112,44 @@ export function Lobby({ onCreateRoom, onJoinRoom }: LobbyProps) {
 
   return (
     <div className="lobby-container">
+      {connectionStatus === 'connecting' && (
+        <p className="lobby-hint">⏳ 正在连接服务器...</p>
+      )}
+      {connectionStatus === 'error' && connectError && (
+        <div className="lobby-error" role="alert">
+          ⚠️ {connectError}
+        </div>
+      )}
       <div className="lobby-options">
-        <div className="lobby-card" onClick={handleCreate}>
+        <div
+          className={`lobby-card${connectionStatus !== 'connected' ? ' disabled' : ''}`}
+          onClick={connectionStatus === 'connected' ? handleCreate : undefined}
+        >
           <h3>创建房间</h3>
           <p className="lobby-role">你是黑方（先手）</p>
-          <button type="button" className="lobby-action-btn">创建</button>
+          <button
+            type="button"
+            className="lobby-action-btn"
+            disabled={connectionStatus !== 'connected'}
+          >
+            创建
+          </button>
         </div>
-        <div className="lobby-card" onClick={() => setView('joining')}>
+        <div
+          className={`lobby-card${connectionStatus !== 'connected' ? ' disabled' : ''}`}
+          onClick={
+            connectionStatus === 'connected' ? () => setView('joining') : undefined
+          }
+        >
           <h3>加入房间</h3>
           <p className="lobby-role">你是白方</p>
-          <button type="button" className="lobby-action-btn">加入</button>
+          <button
+            type="button"
+            className="lobby-action-btn"
+            disabled={connectionStatus !== 'connected'}
+          >
+            加入
+          </button>
         </div>
       </div>
       {joinError && <p className="lobby-error">{joinError}</p>}

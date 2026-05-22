@@ -233,7 +233,12 @@ export function Game() {
             <NetworkStatus lanState={state.lanState} currentPlayer={state.currentPlayer} />
           )}
           {isLanLobbyView ? (
-            <Lobby onCreateRoom={network.createRoom} onJoinRoom={network.joinRoom} />
+            <Lobby
+              onCreateRoom={network.createRoom}
+              onJoinRoom={network.joinRoom}
+              connectionStatus={network.connectionStatus}
+              connectError={network.connectError}
+            />
           ) : (
             <Board
               board={isReplayMode ? replay.state.board : state.board}

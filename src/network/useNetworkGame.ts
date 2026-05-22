@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, useRef, useState } from 'react'
 import { networkManager } from './networkManager'
 import type { GameAction, Player } from '../game/types'
 
@@ -7,16 +7,34 @@ function getDefaultServerUrl(): string {
   return `http://${window.location.hostname}:3001`
 }
 
+export type ConnectionStatus = 'connecting' | 'connected' | 'error'
+
 export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
   const dispatchRef = useRef(dispatch)
   dispatchRef.current = dispatch
   const myColorRef = useRef<Player | null>(null)
+  const [connectionStatus, setConnectionStatus] =
+    useState<ConnectionStatus>('connecting')
+  const [connectError, setConnectError] = useState<string | null>(null)
 
   // 仅在 mount 时建立一次连接；dispatch 通过 ref 访问，避免重连
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     networkManager.connect(getDefaultServerUrl())
     networkManager.setHandlers({
+      onConnect: () => {
+        setConnectionStatus('connected')
+        setConnectError(null)
+      },
+      onDisconnect: () => {
+        setConnectionStatus('error')
+      },
+      onConnectError: (err) => {
+        setConnectionStatus('error')
+        setConnectError(
+          `无法连接到服务器 (${err.message})。请确认后端已启动：在项目根目录运行 \`npm run dev:all\` 或单独运行 \`npm run server\`。`
+        )
+      },
       onGameStart: () => {
         dispatchRef.current({
           type: 'SET_LAN_STATE',
@@ -158,5 +176,7 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
     subscribeChat,
     resign,
     leaveRoom,
+    connectionStatus,
+    connectError,
   }
 }
