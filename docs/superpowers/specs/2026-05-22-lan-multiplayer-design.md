@@ -153,7 +153,7 @@ function useNetworkGame(dispatch) {
 
 1. 点击"悔棋" → `emit('request-undo')` → 按钮变为"等待对方同意..."
 2. 对方收到弹窗："对手请求悔棋" → 同意/拒绝
-3. 同意 → 双方 gameReducer 执行 UNDO → 回退一步
+3. 同意 → 双方 gameReducer 执行 UNDO → 回退一步（与 PvP 模式一致，只撤回请求方的落子）
 4. 拒绝 → 请求方收到"对方拒绝悔棋"提示
 
 ### 执子分配
