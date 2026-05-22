@@ -260,7 +260,6 @@
 
 .status.won {
   border-color: rgba(242, 206, 122, 0.7);
-  color: var(--accent-gold-bright);
   text-shadow: 0 0 16px rgba(242, 206, 122, 0.35);
 }
 
@@ -387,7 +386,6 @@
 
   .game-header {
     align-items: center;
-    text-align: center;
     flex-direction: row;
     justify-content: space-between;
     padding: 10px 14px;
