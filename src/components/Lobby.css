@@ -94,6 +94,25 @@
   cursor: pointer;
   font-size: 14px;
   width: 100%;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.lobby-copy-btn:active {
+  transform: scale(0.97);
+}
+
+.lobby-copy-btn-success {
+  background: #4caf50;
+  cursor: default;
+}
+
+.lobby-copy-btn-error {
+  background: #ef5350;
+  cursor: default;
+}
+
+.lobby-copy-btn:disabled {
+  cursor: default;
 }
 
 .lobby-back-btn {

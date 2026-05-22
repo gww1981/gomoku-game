@@ -19,6 +19,7 @@ export function Lobby({
   const [createdRoomId, setCreatedRoomId] = useState('')
   const [joinError, setJoinError] = useState('')
   const [joining, setJoining] = useState(false)
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
   const handleCreate = useCallback(async () => {
     setView('creating')
@@ -32,8 +33,15 @@ export function Lobby({
     }
   }, [onCreateRoom])
 
-  const handleCopyRoomId = useCallback(() => {
-    navigator.clipboard.writeText(createdRoomId)
+  const handleCopyRoomId = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(createdRoomId)
+      setCopyStatus('success')
+      setTimeout(() => setCopyStatus('idle'), 2000)
+    } catch (err) {
+      setCopyStatus('error')
+      setTimeout(() => setCopyStatus('idle'), 2000)
+    }
   }, [createdRoomId])
 
   const handleJoin = useCallback(async () => {
@@ -61,8 +69,17 @@ export function Lobby({
             <div className="lobby-waiting">
               <p className="lobby-hint">房间号</p>
               <div className="lobby-room-id">{createdRoomId}</div>
-              <button type="button" className="lobby-copy-btn" onClick={handleCopyRoomId}>
-                复制房间号
+              <button
+                type="button"
+                className={`lobby-copy-btn lobby-copy-btn-${copyStatus}`}
+                onClick={handleCopyRoomId}
+                disabled={copyStatus !== 'idle'}
+              >
+                {copyStatus === 'success'
+                  ? '✓ 已复制'
+                  : copyStatus === 'error'
+                    ? '✗ 复制失败'
+                    : '复制房间号'}
               </button>
               <p className="lobby-waiting-text">⏳ 等待对手加入...</p>
             </div>
