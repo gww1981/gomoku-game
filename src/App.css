@@ -379,58 +379,71 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .game-shell {
     align-items: start;
+    padding: 12px;
   }
 
   .game-header {
     align-items: center;
     text-align: center;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+
+  .brand-block {
+    gap: 8px;
+  }
+
+  .game-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .eyebrow {
+    font-size: 0.7rem;
   }
 
   .mode-toolbar {
-    justify-content: center;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    width: 100%;
-    min-width: 0;
+    justify-content: flex-end;
+    gap: 4px;
   }
 
   .mode-group {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    width: 100%;
-    min-width: 0;
-  }
-
-  .mode-group:last-child {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
   }
 
   .mode-group button,
   .mode-choice,
   .difficulty-choice {
-    min-width: 0;
-    width: 100%;
-    padding-inline: 8px;
+    min-width: 60px;
+    padding: 0 10px;
+    min-height: 36px;
+    font-size: 11px;
+  }
+
+  .board-stage {
+    padding: 12px;
   }
 
   .board {
     --cell-size: clamp(16px, 5vw, 36px);
-
     padding: 8px;
   }
 
   .game-footer {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    padding: 8px 12px;
   }
 
   .mode-badge,
   .status,
   .reset-button {
-    width: 100%;
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 11px;
   }
 }
 
@@ -441,7 +454,7 @@
 
   .game-header,
   .game-footer {
-    padding: 12px;
+    padding: 8px 12px;
   }
 
   .board-stage {
@@ -450,10 +463,8 @@
 
   .board {
     --cell-size: clamp(16px, 5vw, 36px);
-
     padding: 8px;
   }
-
 }
 
 /* LAN 模式弹窗通用样式 */
