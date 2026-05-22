@@ -452,3 +452,59 @@
   }
 
 }
+
+/* LAN 模式弹窗通用样式 */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.dialog-box {
+  background: var(--color-surface, #1a1a2e);
+  border-radius: 12px;
+  padding: 24px 32px;
+  text-align: center;
+  color: var(--color-text, #e0e0e0);
+  min-width: 280px;
+  border: 1px solid var(--color-border, #333);
+}
+
+.dialog-box p { margin: 0 0 12px; font-size: 16px; }
+.dialog-hint { color: var(--color-text-secondary, #888); font-size: 13px; }
+
+.dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.dialog-btn {
+  padding: 6px 20px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #555);
+  background: transparent;
+  color: var(--color-text, #e0e0e0);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dialog-btn:hover { background: rgba(255, 255, 255, 0.05); }
+.dialog-btn.accept { color: #69f0ae; border-color: #69f0ae; }
+.dialog-btn.reject { color: #ff7043; border-color: #ff7043; }
+
+.resign-button {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid #ff7043;
+  background: transparent;
+  color: #ff7043;
+  cursor: pointer;
+  font-size: 13px;
+}
+.resign-button:hover { background: rgba(255, 112, 67, 0.1); }

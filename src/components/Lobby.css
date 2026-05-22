@@ -1,0 +1,131 @@
+.lobby-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  padding: 24px;
+}
+
+.lobby-options {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.lobby-card {
+  background: var(--color-surface, #1a1a2e);
+  border-radius: 12px;
+  padding: 24px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-width: 220px;
+  border: 1px solid var(--color-border, #333);
+}
+
+.lobby-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.lobby-card.create-card,
+.lobby-card.join-card {
+  cursor: default;
+}
+
+.lobby-card h3 {
+  margin: 0 0 8px;
+  color: var(--color-text, #e0e0e0);
+  font-size: 18px;
+}
+
+.lobby-role {
+  color: var(--color-text-secondary, #888);
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.lobby-action-btn {
+  padding: 8px 24px;
+  border-radius: 8px;
+  background: var(--color-primary, #5dade2);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  margin-top: 8px;
+}
+
+.lobby-room-id {
+  font-size: 32px;
+  font-weight: bold;
+  letter-spacing: 8px;
+  color: var(--color-accent, #ffab40);
+  margin: 12px 0;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.lobby-input {
+  font-size: 24px;
+  text-align: center;
+  letter-spacing: 8px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #333);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--color-text, #e0e0e0);
+  box-sizing: border-box;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.lobby-join-btn,
+.lobby-copy-btn {
+  margin-top: 8px;
+  padding: 8px 24px;
+  border-radius: 8px;
+  background: var(--color-primary, #5dade2);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  width: 100%;
+}
+
+.lobby-back-btn {
+  margin-top: 8px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary, #888);
+  border: 1px solid var(--color-border, #333);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.lobby-join-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lobby-hint {
+  color: var(--color-text-secondary, #888);
+  font-size: 13px;
+  margin: 4px 0;
+}
+
+.lobby-error {
+  color: #ff7043;
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+.lobby-waiting-text {
+  color: #69f0ae;
+  font-size: 14px;
+  margin-top: 16px;
+}

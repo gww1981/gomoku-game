@@ -210,3 +210,106 @@ describe('moveHistory collection', () => {
     expect(state.currentPlayer).toBe('white')
   })
 })
+
+describe('gameReducer - LAN actions', () => {
+  it('SET_LAN_STATE 应合并 lanState 字段', () => {
+    const state = getInitialGameState()
+    const next = gameReducer(state, {
+      type: 'SET_LAN_STATE',
+      lanState: { myColor: 'black', roomId: 'A3F7K2', opponentConnected: true, undoRequested: false },
+    })
+    expect(next.lanState).toEqual({
+      myColor: 'black',
+      roomId: 'A3F7K2',
+      opponentConnected: true,
+      undoRequested: false,
+    })
+  })
+
+  it('SET_LAN_STATE 应支持部分字段更新', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, {
+      type: 'SET_LAN_STATE',
+      lanState: { myColor: 'white', roomId: 'X1Y2Z3', opponentConnected: true, undoRequested: false },
+    })
+    state = gameReducer(state, {
+      type: 'SET_LAN_STATE',
+      lanState: { opponentConnected: false },
+    })
+    expect(state.lanState?.opponentConnected).toBe(false)
+    expect(state.lanState?.roomId).toBe('X1Y2Z3')
+  })
+
+  it('OPPONENT_MOVE 应在棋盘上落子（等价 MOVE）', () => {
+    const state = getInitialGameState()
+    const next = gameReducer(state, { type: 'OPPONENT_MOVE', row: 7, col: 7 })
+    expect(next.board[7][7]).toBe('black')
+    expect(next.currentPlayer).toBe('white')
+    expect(next.moveHistory).toHaveLength(1)
+  })
+
+  it('OPPONENT_UNDO_REQUEST 应设置 undoRequested 为 true', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, {
+      type: 'SET_LAN_STATE',
+      lanState: { myColor: 'black', roomId: 'A3F7K2', opponentConnected: true, undoRequested: false },
+    })
+    state = gameReducer(state, { type: 'OPPONENT_UNDO_REQUEST' })
+    expect(state.lanState?.undoRequested).toBe(true)
+  })
+
+  it('OPPONENT_LEFT 应设置 opponentConnected 为 false', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, {
+      type: 'SET_LAN_STATE',
+      lanState: { myColor: 'black', roomId: 'A3F7K2', opponentConnected: true, undoRequested: false },
+    })
+    state = gameReducer(state, { type: 'OPPONENT_LEFT' })
+    expect(state.lanState?.opponentConnected).toBe(false)
+  })
+
+  it('RESIGN 应将对方设为 winner', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, { type: 'SET_MODE', mode: 'lan' })
+    state = gameReducer(state, { type: 'MOVE', row: 7, col: 7 })
+    state = gameReducer(state, { type: 'RESIGN', resignedBy: 'black' })
+    expect(state.status).toBe('won')
+    expect(state.winner).toBe('white')
+  })
+
+  it('RESIGN 黑方认输 -> 白方胜', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, { type: 'RESIGN', resignedBy: 'black' })
+    expect(state.winner).toBe('white')
+  })
+
+  it('RESIGN 白方认输 -> 黑方胜', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, { type: 'RESIGN', resignedBy: 'white' })
+    expect(state.winner).toBe('black')
+  })
+
+  it('LAN UNDO 带 requestedBy=最后下子方 撤回 1 步', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, { type: 'SET_MODE', mode: 'lan' })
+    state = gameReducer(state, { type: 'MOVE', row: 7, col: 7 }) // black
+    state = gameReducer(state, { type: 'MOVE', row: 8, col: 8 }) // white
+    // 当前轮到 black，white 是最后下子方，white 请求悔棋应撤回 1 步（撤 white 的子）
+    state = gameReducer(state, { type: 'UNDO', requestedBy: 'white' })
+    expect(state.moveHistory).toHaveLength(1)
+    expect(state.board[8][8]).toBeNull()
+    expect(state.board[7][7]).toBe('black')
+  })
+
+  it('LAN UNDO 带 requestedBy=非最后下子方 撤回 2 步', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, { type: 'SET_MODE', mode: 'lan' })
+    state = gameReducer(state, { type: 'MOVE', row: 7, col: 7 }) // black
+    state = gameReducer(state, { type: 'MOVE', row: 8, col: 8 }) // white
+    // black 想撤回自己刚下的（7,7），需撤 2 步（包括 white 的回应）
+    state = gameReducer(state, { type: 'UNDO', requestedBy: 'black' })
+    expect(state.moveHistory).toHaveLength(0)
+    expect(state.board[7][7]).toBeNull()
+    expect(state.board[8][8]).toBeNull()
+  })
+})
