@@ -1,14 +1,15 @@
 # 五子棋 Web 游戏
 
-基于 React + TypeScript + Vite 构建的现代五子棋 Web 游戏，支持双人对战、AI 对战、悔棋、录像回放，以及可切换的背景音乐和音效系统。
+基于 React + TypeScript + Vite 构建的现代五子棋 Web 游戏，支持双人对战、AI 对战、局域网联机对战、悔棋、录像回放，以及可切换的背景音乐和音效系统。
 
 ## 功能特性
 
 - **15x15 标准棋盘**：完整五子棋棋盘，支持最后一手和获胜连线高亮。
 - **双人对战**：本地双人轮流落子，黑棋先手。
 - **AI 对战**：提供简单、中等、困难三档 AI。
+- **局域网对战**：基于 Socket.IO 的房间制联机，6 位房间号匹配，支持悔棋协商、认输、断线 60 秒重连和快捷聊天气泡。
 - **胜负判断**：检测横向、纵向、左斜、右斜四个方向的五子连线。
-- **悔棋功能**：对局中可撤回最近落子。
+- **悔棋功能**：对局中可撤回最近落子；LAN 模式下需对方同意。
 - **录像回放**：对局结束后保存录像，可播放、暂停、单步前进/后退、跳到开头/结尾和调节速度。
 - **录像列表**：历史对局保存在 localStorage，可从列表中选择回放。
 - **背景音乐**：内置合成 BGM 和 5 首 SoundHelix 远程预设曲目。
@@ -34,6 +35,7 @@
 | TypeScript | 类型安全 |
 | Vite | 开发服务器和构建工具 |
 | Vitest | 单元测试 |
+| Express + Socket.IO | 局域网对战信令服务端 |
 | Web Audio API | 合成 BGM 和音效 |
 | HTMLAudioElement | 远程 MP3 背景音乐播放 |
 
@@ -44,11 +46,16 @@ src/
 ├─ game/                 # 游戏核心逻辑、AI 和 reducer
 ├─ replay/               # 录像回放引擎、Hook 和 localStorage 存储
 ├─ audio/                # BGM、SFX、AudioProvider 和音频控制类型
-├─ components/           # 棋盘、状态、音频面板、回放控制栏等 React 组件
+├─ network/              # Socket.IO 客户端封装与 useNetworkGame hook
+├─ components/           # 棋盘、状态、大厅、聊天、音频面板等 React 组件
 ├─ test/                 # 测试配置
 ├─ App.tsx
 ├─ App.css
 └─ index.css
+
+server/
+├─ index.js              # Socket.IO 信令服务入口
+└─ roomManager.js        # 房间状态和断线重连管理
 ```
 
 ## 快速开始
@@ -61,11 +68,21 @@ npm install
 
 ### 开发模式
 
+仅前端：
+
 ```bash
 npm run dev
 ```
 
 默认访问 `http://localhost:5173`。
+
+前端 + 局域网服务端一起启动（局域网对战必备）：
+
+```bash
+npm run dev:all
+```
+
+服务端运行在 `http://localhost:3001`，启动时会在控制台输出本机局域网 IP，可分享给同一网络下的好友。
 
 ### 运行测试
 
@@ -79,6 +96,15 @@ npm run test:run
 npm run build
 ```
 
+## 局域网对战
+
+1. 双方设备处于同一局域网。
+2. 启动 `npm run dev:all`，将控制台显示的 `http://<局域网IP>:5173` 分享给对方。
+3. 选择「局域网对战」模式：
+   - 房主点击「创建房间」→ 复制 6 位房间号给对方 → 等待加入。
+   - 加入方输入房间号 → 加入即开始对局，房主执黑先手。
+4. 对局中支持：悔棋请求/同意、认输、快捷聊天气泡、断线 60 秒内自动重连，超时判负。
+
 ## 音频系统说明
 
 音频系统由 `BGMManager`、`AudioProvider` 和 `useAudio` 统一调度。
@@ -90,11 +116,11 @@ npm run build
 
 ## 测试覆盖
 
-当前测试覆盖游戏逻辑、AI、回放引擎、音频管理器、音频面板和主要游戏 UI。
+当前测试覆盖游戏逻辑、AI、回放引擎、音频管理器、音频面板、主要游戏 UI、LAN reducer 与房间管理器。
 
 已验证：
 
-- `npm run test:run`：78 个测试通过
+- `npm run test:run`：88 个测试通过
 - `npm run build`：生产构建通过
 
 ## License
