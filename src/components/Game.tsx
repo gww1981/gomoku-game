@@ -1,5 +1,5 @@
 // src/components/Game.tsx
-import { useReducer, useEffect, useCallback, useRef, useState } from 'react'
+import { useState, useRef, useCallback, useEffect, useReducer } from 'react'
 import { gameReducer, getInitialGameState } from '../game/gameReducer'
 import { getAIMove } from '../game/ai'
 import type { GameMode, AIDifficulty } from '../game/types'
@@ -41,15 +41,29 @@ export function Game() {
   const { loadRecord } = replay
   const { playSFX, resumeBGM, stopBGM } = audio
   const savedTerminalGameRef = useRef<string | null>(null)
+  const [showLanLeaveConfirm, setShowLanLeaveConfirm] = useState(false)
+  const pendingModeChange = useRef<{ mode: GameMode; aiDifficulty?: AIDifficulty } | null>(null)
 
   const handleModeSelect = useCallback((mode: GameMode, aiDifficulty?: AIDifficulty) => {
-    // 离开 LAN 模式或切换到不同模式时清理网络房间状态
+    // 如果正在录像播放，退出录像模式
+    if (isReplayMode) {
+      setIsReplayMode(false)
+      savedTerminalGameRef.current = null
+      dispatch({ type: 'RESET' })
+    }
+    // 局域网对战中切换到其他模式，需要提醒
+    if (state.settings.mode === 'lan' && state.lanState?.opponentConnected && mode !== 'lan') {
+      pendingModeChange.current = { mode, aiDifficulty }
+      setShowLanLeaveConfirm(true)
+      return
+    }
+    // 离开 LAN 模式时清理网络房间状态
     if (state.settings.mode === 'lan' && mode !== 'lan' && state.lanState) {
       network.leaveRoom()
     }
     dispatch({ type: 'SET_MODE', mode, aiDifficulty })
     playSFX('click')
-  }, [state.settings.mode, state.lanState, network, playSFX])
+  }, [state.settings.mode, state.lanState, isReplayMode, network, playSFX, dispatch])
 
   const handleCellClick = useCallback((row: number, col: number) => {
     if (state.status !== 'playing') return
@@ -199,6 +213,21 @@ export function Game() {
     playSFX('click')
   }, [state.settings.mode, network, playSFX])
 
+  const handleLanLeaveConfirm = useCallback(() => {
+    setShowLanLeaveConfirm(false)
+    network.leaveRoom()
+    if (pendingModeChange.current) {
+      dispatch({ type: 'SET_MODE', ...pendingModeChange.current })
+      pendingModeChange.current = null
+    }
+    playSFX('click')
+  }, [network, playSFX, dispatch])
+
+  const handleLanLeaveCancel = useCallback(() => {
+    setShowLanLeaveConfirm(false)
+    pendingModeChange.current = null
+  }, [])
+
   const modeLabel = state.settings.mode === 'pvp'
     ? '双人'
     : state.settings.mode === 'lan'
@@ -229,7 +258,7 @@ export function Game() {
           />
         </header>
         <div className="board-stage">
-          {state.settings.mode === 'lan' && state.lanState && state.lanState.opponentConnected && (
+          {!isReplayMode && state.settings.mode === 'lan' && state.lanState && state.lanState.opponentConnected && (
             <NetworkStatus lanState={state.lanState} currentPlayer={state.currentPlayer} />
           )}
           {isLanLobbyView ? (
@@ -322,6 +351,22 @@ export function Game() {
           onConfirm={handleResignConfirm}
           onCancel={() => setShowResignDialog(false)}
         />
+      )}
+      {showLanLeaveConfirm && (
+        <div className="dialog-overlay">
+          <div className="dialog">
+            <h3>退出局域网对战</h3>
+            <p>你确定要退出当前对局吗？对方将收到退出通知。</p>
+            <div className="dialog-actions">
+              <button type="button" className="dialog-btn cancel" onClick={handleLanLeaveCancel}>
+                取消
+              </button>
+              <button type="button" className="dialog-btn confirm" onClick={handleLanLeaveConfirm}>
+                确认退出
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   )

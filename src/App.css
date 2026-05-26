@@ -14,11 +14,11 @@
 
 .game-header {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
   gap: 20px;
   min-width: 0;
-  padding: clamp(16px, 2.6vw, 24px);
+  padding: clamp(10px, 2vw, 16px);
   border: 1px solid var(--panel-line);
   border-radius: 8px;
   background:
@@ -29,8 +29,9 @@
 }
 
 .brand-block {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -45,7 +46,7 @@
 
 .game-header h1 {
   color: var(--text-primary);
-  font-size: clamp(2rem, 5vw, 3.8rem);
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
   font-weight: 650;
   line-height: 0.95;
   letter-spacing: 0;
@@ -56,7 +57,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -221,10 +222,10 @@
 
 .game-footer {
   display: grid;
-  grid-template-columns: auto minmax(180px, 1fr) auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 12px;
-  padding: clamp(12px, 2.4vw, 18px);
+  padding: clamp(8px, 1.5vw, 12px);
   border: 1px solid var(--panel-line);
   border-radius: 8px;
   background: var(--panel);
@@ -234,30 +235,31 @@
 
 .mode-badge,
 .status {
-  min-height: 44px;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(201, 168, 108, 0.18);
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(20, 13, 9, 0.44);
   color: var(--text-secondary);
 }
 
 .mode-badge {
-  padding: 0 14px;
+  padding: 0 12px;
   white-space: nowrap;
+  font-size: 12px;
 }
 
 .status {
-  padding: 0 18px;
+  padding: 0 16px;
   font-weight: 650;
   text-align: center;
+  color: var(--accent-gold-bright);
 }
 
 .status.won {
   border-color: rgba(242, 206, 122, 0.7);
-  color: var(--accent-gold-bright);
   text-shadow: 0 0 16px rgba(242, 206, 122, 0.35);
 }
 
@@ -271,7 +273,7 @@
 }
 
 .reset-button {
-  padding: 0 18px;
+  padding: 0 16px;
   color: var(--text-primary);
   animation: fadeSlideUp 260ms ease-out;
 }
@@ -376,58 +378,70 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .game-shell {
     align-items: start;
+    padding: 12px;
   }
 
   .game-header {
     align-items: center;
-    text-align: center;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+
+  .brand-block {
+    gap: 8px;
+  }
+
+  .game-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .eyebrow {
+    font-size: 0.7rem;
   }
 
   .mode-toolbar {
-    justify-content: center;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    width: 100%;
-    min-width: 0;
+    justify-content: flex-end;
+    gap: 4px;
   }
 
   .mode-group {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    width: 100%;
-    min-width: 0;
-  }
-
-  .mode-group:last-child {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
   }
 
   .mode-group button,
   .mode-choice,
   .difficulty-choice {
-    min-width: 0;
-    width: 100%;
-    padding-inline: 8px;
+    min-width: 60px;
+    padding: 0 10px;
+    min-height: 36px;
+    font-size: 11px;
+  }
+
+  .board-stage {
+    padding: 12px;
   }
 
   .board {
     --cell-size: clamp(16px, 5vw, 36px);
-
     padding: 8px;
   }
 
   .game-footer {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    padding: 8px 12px;
   }
 
   .mode-badge,
   .status,
   .reset-button {
-    width: 100%;
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 11px;
   }
 }
 
@@ -438,7 +452,7 @@
 
   .game-header,
   .game-footer {
-    padding: 12px;
+    padding: 8px 12px;
   }
 
   .board-stage {
@@ -447,10 +461,8 @@
 
   .board {
     --cell-size: clamp(16px, 5vw, 36px);
-
     padding: 8px;
   }
-
 }
 
 /* LAN 模式弹窗通用样式 */
@@ -508,3 +520,66 @@
   font-size: 13px;
 }
 .resign-button:hover { background: rgba(255, 112, 67, 0.1); }
+
+/* 局域网退出确认对话框 */
+.dialog {
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 12px;
+  padding: 24px 32px;
+  text-align: center;
+  color: var(--text-primary);
+  min-width: 300px;
+  box-shadow: var(--shadow-panel);
+}
+
+.dialog h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent-gold-bright);
+}
+
+.dialog p {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.dialog-btn {
+  padding: 8px 24px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 168, 108, 0.28);
+  background: rgba(28, 18, 12, 0.74);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 160ms ease;
+}
+
+.dialog-btn:hover {
+  border-color: rgba(242, 206, 122, 0.62);
+  color: var(--text-primary);
+  background: rgba(52, 34, 23, 0.88);
+}
+
+.dialog-btn.cancel {
+  color: var(--text-secondary);
+}
+
+.dialog-btn.confirm {
+  color: #ff7043;
+  border-color: rgba(255, 112, 67, 0.5);
+}
+
+.dialog-btn.confirm:hover {
+  background: rgba(255, 112, 67, 0.15);
+  border-color: #ff7043;
+}

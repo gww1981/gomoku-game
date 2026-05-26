@@ -1,86 +1,162 @@
+/* ============================================
+   ChatPanel - 即时消息聊天组件
+   ============================================ */
+
 .chat-panel {
   position: relative;
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 200px;
 }
 
-.chat-quick-messages {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+/* 快捷消息栏 */
+.chat-quick-bar {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
-.chat-quick-btn {
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: var(--color-surface, #1a1a2e);
-  color: var(--color-text, #e0e0e0);
-  border: 1px solid var(--color-border, #333);
-  cursor: pointer;
+.chat-quick-chip {
+  padding: 5px 12px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary, #e0e0e0);
   font-size: 12px;
-  transition: background 0.2s;
+  cursor: pointer;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
-.chat-quick-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+.chat-quick-chip:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
 }
 
-.chat-history-toggle {
-  padding: 4px 12px;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-text-secondary, #888);
-  border: 1px solid var(--color-border, #333);
-  cursor: pointer;
-  font-size: 12px;
+.chat-quick-chip:active {
+  transform: translateY(0);
 }
 
-.chat-history {
-  max-height: 120px;
+/* 消息列表 */
+.chat-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   overflow-y: auto;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 6px;
-  font-size: 12px;
+  max-height: 120px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
-.chat-empty {
-  color: var(--color-text-secondary, #888);
-  font-style: italic;
+.chat-messages::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.chat-empty-hint {
   text-align: center;
+  color: var(--text-secondary, #666);
+  font-size: 12px;
+  padding: 16px 0;
+  font-style: italic;
 }
 
-.chat-msg { padding: 2px 0; }
-.chat-label-me { color: #5dade2; font-weight: bold; }
-.chat-label-opp { color: #ce93d8; font-weight: bold; }
+/* 消息行 - 决定左右布局 */
+.chat-bubble-row {
+  display: flex;
+  width: 100%;
+}
 
+.chat-bubble-row.me {
+  justify-content: flex-end;
+}
+
+.chat-bubble-row.opponent {
+  justify-content: flex-start;
+}
+
+/* 消息气泡 */
 .chat-bubble {
-  position: fixed;
-  padding: 8px 16px;
-  border-radius: 16px;
+  max-width: 85%;
+  padding: 6px 12px;
+  border-radius: 12px;
   font-size: 13px;
-  animation: fadeIn 0.3s;
-  z-index: 100;
-  pointer-events: none;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .chat-bubble.me {
   background: #1a5276;
   color: #5dade2;
-  top: 18%;
-  right: 18%;
+  border-bottom-right-radius: 4px;
 }
 
 .chat-bubble.opponent {
   background: #4a148c;
   color: #ce93d8;
-  bottom: 18%;
-  left: 18%;
+  border-bottom-left-radius: 4px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+/* 气泡入场动画 */
+.chat-bubble {
+  animation: bubbleIn 0.2s ease-out;
+}
+
+@keyframes bubbleIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 浮动提示气泡 */
+.chat-toast {
+  position: fixed;
+  padding: 10px 18px;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 500;
+  animation: toastIn 0.25s ease-out;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.chat-toast.me {
+  background: #1a5276;
+  color: #5dade2;
+  top: 16%;
+  right: 16%;
+}
+
+.chat-toast.opponent {
+  background: #4a148c;
+  color: #ce93d8;
+  bottom: 16%;
+  left: 16%;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

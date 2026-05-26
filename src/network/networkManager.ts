@@ -18,6 +18,7 @@ export type NetworkEventHandlers = {
   onOpponentDisconnected: () => void
   onOpponentReconnected: () => void
   onOpponentTimeout: () => void
+  onOpponentLeft: () => void
   onConnect: () => void
   onDisconnect: (reason: string) => void
   onConnectError: (error: Error) => void
@@ -82,6 +83,7 @@ export class NetworkManager {
     this.socket.on('opponent-disconnected', handlers.onOpponentDisconnected)
     this.socket.on('opponent-reconnected', handlers.onOpponentReconnected)
     this.socket.on('opponent-timeout', handlers.onOpponentTimeout)
+    this.socket.on('opponent-left', handlers.onOpponentLeft)
   }
 
   removeHandlers(): void {
@@ -95,6 +97,7 @@ export class NetworkManager {
     this.socket.off('opponent-disconnected')
     this.socket.off('opponent-reconnected')
     this.socket.off('opponent-timeout')
+    this.socket.off('opponent-left')
   }
 
   subscribeChat(cb: (message: string) => void): () => void {
@@ -172,6 +175,13 @@ export class NetworkManager {
 
   isConnected(): boolean {
     return this.socket?.connected ?? false
+  }
+
+  leaveRoom(): void {
+    if (!this.socket || !this.roomId) return
+    this.socket.emit('leave-room', { roomId: this.roomId })
+    this.roomId = null
+    this.chatListeners.clear()
   }
 
   clearRoom(): void {
