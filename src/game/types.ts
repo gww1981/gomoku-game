@@ -52,6 +52,7 @@ export interface GameState {
   moveHistory: MoveRecord[]
   lanState: LanState | null
   gameStartTime: number
+  winReason?: 'five' | 'timeout' | 'resign'
 }
 export type GameAction =
   | { type: 'MOVE'; row: number; col: number }

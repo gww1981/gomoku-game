@@ -17,6 +17,7 @@ import { NetworkStatus } from './NetworkStatus'
 import { ChatPanel } from './ChatPanel'
 import { UndoConfirmDialog } from './UndoConfirmDialog'
 import { ResignDialog } from './ResignDialog'
+import { TimeoutDialog } from './TimeoutDialog'
 import { useNetworkGame } from '../network/useNetworkGame'
 
 const AI_THINKING_DELAY = 400
@@ -32,6 +33,7 @@ export function Game() {
   const audio = useAudio()
   const network = useNetworkGame(dispatch)
   const [showResignDialog, setShowResignDialog] = useState(false)
+  const [showTimeoutDialog, setShowTimeoutDialog] = useState(false)
   const prevStatusRef = useRef(state.status)
   const prevAIThinkingRef = useRef(state.isAIThinking)
 
@@ -106,6 +108,9 @@ export function Game() {
       if (savedTerminalGameRef.current === terminalGameKey) return
       savedTerminalGameRef.current = terminalGameKey
 
+      // 超时结束不进入回放，由 TimeoutDialog 处理
+      if (state.winReason === 'timeout' && state.settings.mode === 'lan') return
+
       const record: import('../game/types').GameRecord = {
         id: crypto.randomUUID(),
         version: 1,
@@ -168,12 +173,15 @@ export function Game() {
       playSFX('win')
       if (state.settings.mode === 'lan') {
         network.notifyGameOver()
+        if (state.winReason === 'timeout') {
+          setShowTimeoutDialog(true)
+        }
       }
     } else if (prevStatusRef.current === 'playing' && state.status === 'draw') {
       playSFX('draw')
     }
     prevStatusRef.current = state.status
-  }, [state.status, state.settings.mode, playSFX, network])
+  }, [state.status, state.settings.mode, state.winReason, playSFX, network])
 
   useEffect(() => {
     if (!prevAIThinkingRef.current && state.isAIThinking) {
@@ -215,6 +223,12 @@ export function Game() {
   const handleResignConfirm = useCallback(() => {
     setShowResignDialog(false)
     network.resign()
+  }, [network])
+
+  const handleTimeoutConfirm = useCallback(() => {
+    setShowTimeoutDialog(false)
+    savedTerminalGameRef.current = null
+    network.resetGame()
   }, [network])
 
   return (
@@ -324,6 +338,13 @@ export function Game() {
         <ResignDialog
           onConfirm={handleResignConfirm}
           onCancel={() => setShowResignDialog(false)}
+        />
+      )}
+      {showTimeoutDialog && state.winner && state.lanState && (
+        <TimeoutDialog
+          winner={state.winner}
+          myColor={state.lanState.myColor}
+          onConfirm={handleTimeoutConfirm}
         />
       )}
     </main>

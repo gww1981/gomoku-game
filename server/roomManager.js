@@ -70,11 +70,6 @@ export function createRoomManager() {
       }
     },
 
-    setCurrentPlayer(roomId, player) {
-      const room = rooms.get(roomId)
-      if (room) room.currentPlayer = player
-    },
-
     // 悔棋：从尾部移除最后一手属于 player 的棋，返回悔棋后的 currentPlayer
     rollbackLastMoveOf(roomId, player) {
       const room = rooms.get(roomId)
@@ -130,6 +125,18 @@ export function createRoomManager() {
 
     deleteRoom(roomId) {
       rooms.delete(roomId)
+    },
+
+    resetGame(roomId) {
+      const room = rooms.get(roomId)
+      if (!room) return false
+      if (room.status !== 'ended') return false // 只允许在结束后重置
+      room.moves = []
+      room.status = 'playing'
+      room.currentPlayer = 'black'
+      room.disconnectedAt = null
+      room.undoRequester = null
+      return true
     },
   }
 }

@@ -22,6 +22,7 @@ export type NetworkEventHandlers = {
   onOpponentTimeout: () => void
   onMoveTimerStart: (payload: MoveTimerStartPayload) => void
   onMoveTimeout: (payload: MoveTimeoutPayload) => void
+  onGameReset: () => void
   onConnect: () => void
   onDisconnect: (reason: string) => void
   onConnectError: (error: Error) => void
@@ -88,6 +89,7 @@ export class NetworkManager {
     this.socket.on('opponent-timeout', handlers.onOpponentTimeout)
     this.socket.on('move-timer-start', handlers.onMoveTimerStart)
     this.socket.on('move-timeout', handlers.onMoveTimeout)
+    this.socket.on('game-reset', handlers.onGameReset)
   }
 
   removeHandlers(): void {
@@ -103,6 +105,7 @@ export class NetworkManager {
     this.socket.off('opponent-timeout')
     this.socket.off('move-timer-start')
     this.socket.off('move-timeout')
+    this.socket.off('game-reset')
   }
 
   subscribeChat(cb: (message: string) => void): () => void {
@@ -160,6 +163,11 @@ export class NetworkManager {
   notifyGameOver(): void {
     if (!this.socket || !this.roomId) return
     this.socket.emit('game-over', { roomId: this.roomId })
+  }
+
+  resetGame(): void {
+    if (!this.socket || !this.roomId) return
+    this.socket.emit('reset-game', { roomId: this.roomId })
   }
 
   async reconnect(oldSocketId: string): Promise<ReconnectResult> {
