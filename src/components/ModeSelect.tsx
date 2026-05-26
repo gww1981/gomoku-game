@@ -19,6 +19,7 @@ export function ModeSelect({ mode, aiDifficulty, onSelect }: ModeSelectProps) {
         <button
           type="button"
           aria-pressed={mode === 'pvp'}
+          disabled={mode === 'pvp'}
           onClick={() => onSelect('pvp')}
         >
           双人
@@ -26,6 +27,7 @@ export function ModeSelect({ mode, aiDifficulty, onSelect }: ModeSelectProps) {
         <button
           type="button"
           aria-pressed={mode === 'ai'}
+          disabled={mode === 'ai'}
           onClick={() => onSelect('ai', aiDifficulty)}
         >
           AI 对战
@@ -33,6 +35,7 @@ export function ModeSelect({ mode, aiDifficulty, onSelect }: ModeSelectProps) {
         <button
           type="button"
           aria-pressed={mode === 'lan'}
+          disabled={mode === 'lan'}
           onClick={() => onSelect('lan')}
         >
           局域网对战
@@ -45,7 +48,7 @@ export function ModeSelect({ mode, aiDifficulty, onSelect }: ModeSelectProps) {
             type="button"
             className="difficulty-choice"
             aria-pressed={aiDifficulty === option.difficulty}
-            disabled={mode !== 'ai'}
+            disabled={mode !== 'ai' || aiDifficulty === option.difficulty}
             onClick={() => onSelect('ai', option.difficulty)}
           >
             {option.label}

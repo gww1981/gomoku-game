@@ -11,6 +11,7 @@ export type ServerEvent =
   | 'move-timer-start'
   | 'move-timeout'
   | 'game-reset'
+  | 'opponent-left'
 
 export type ClientEvent =
   | 'create-room'
@@ -23,6 +24,7 @@ export type ClientEvent =
   | 'reconnect'
   | 'game-over'
   | 'reset-game'
+  | 'leave-room'
 
 export interface OpponentMovePayload {
   row: number

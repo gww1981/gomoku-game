@@ -97,6 +97,12 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
       onGameReset: () => {
         dispatchRef.current({ type: 'RESET' })
       },
+      onOpponentLeft: () => {
+        dispatchRef.current({
+          type: 'SET_LAN_STATE',
+          lanState: { opponentConnected: false },
+        })
+      },
     })
     return () => {
       networkManager.removeHandlers()
@@ -184,7 +190,7 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
   }, [])
 
   const leaveRoom = useCallback(() => {
-    networkManager.clearRoom()
+    networkManager.leaveRoom()
     myColorRef.current = null
   }, [])
 
