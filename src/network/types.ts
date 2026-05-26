@@ -8,6 +8,8 @@ export type ServerEvent =
   | 'opponent-disconnected'
   | 'opponent-reconnected'
   | 'opponent-timeout'
+  | 'move-timer-start'
+  | 'move-timeout'
 
 export type ClientEvent =
   | 'create-room'
@@ -18,6 +20,7 @@ export type ClientEvent =
   | 'chat'
   | 'resign'
   | 'reconnect'
+  | 'game-over'
 
 export interface OpponentMovePayload {
   row: number
@@ -47,4 +50,13 @@ export interface JoinRoomResult {
   success: boolean
   role?: 'white'
   error?: string
+}
+
+export interface MoveTimerStartPayload {
+  deadline: number
+  currentPlayer: 'black' | 'white'
+}
+
+export interface MoveTimeoutPayload {
+  loser: 'black' | 'white'
 }

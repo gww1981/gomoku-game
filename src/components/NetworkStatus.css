@@ -5,10 +5,17 @@
   padding: 8px 16px;
   background: var(--color-surface, #1a1a2e);
   border-radius: 8px;
+  border: 1px solid transparent;
   font-size: 13px;
   color: var(--color-text, #e0e0e0);
   margin-bottom: 12px;
   flex-wrap: wrap;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.network-status.urgent {
+  border-color: #ff7043;
+  box-shadow: 0 0 8px rgba(255, 112, 67, 0.4);
 }
 
 .status-dot {
@@ -38,3 +45,26 @@
 
 .my-turn { color: var(--color-accent, #ffab40); font-weight: bold; }
 .opponent-turn { color: var(--color-text-secondary, #888); }
+
+.timer-block {
+  font-variant-numeric: tabular-nums;
+  min-width: 3.8em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.timer-normal {
+  color: var(--color-text-secondary, #888);
+}
+
+.timer-urgent {
+  color: #ff7043;
+  font-weight: bold;
+  animation: timer-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}

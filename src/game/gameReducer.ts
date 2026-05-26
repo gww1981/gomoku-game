@@ -101,7 +101,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         winningCells: [],
         status: 'playing',
         winner: null,
-        lanState: state.lanState ? { ...state.lanState, undoRequested: false } : null,
+        lanState: state.lanState ? { ...state.lanState, undoRequested: false, moveDeadline: null, timerFor: null } : null,
       }
     }
 
@@ -190,6 +190,8 @@ function handleLanAction(state: GameState, action: GameAction): GameState {
         roomId: '',
         opponentConnected: false,
         undoRequested: false,
+        moveDeadline: null,
+        timerFor: null,
       }
       return {
         ...state,
@@ -250,6 +252,20 @@ function handleLanAction(state: GameState, action: GameAction): GameState {
         status: 'won',
         winner,
         winningCells: [],
+      }
+    }
+
+    case 'MOVE_TIMEOUT': {
+      if (state.status !== 'playing') return state
+      const winner: Player = action.loser === 'black' ? 'white' : 'black'
+      return {
+        ...state,
+        status: 'won',
+        winner,
+        winningCells: [],
+        lanState: state.lanState
+          ? { ...state.lanState, moveDeadline: null, timerFor: null }
+          : null,
       }
     }
 

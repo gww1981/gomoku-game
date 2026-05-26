@@ -223,6 +223,8 @@ describe('gameReducer - LAN actions', () => {
       roomId: 'A3F7K2',
       opponentConnected: true,
       undoRequested: false,
+      moveDeadline: null,
+      timerFor: null,
     })
   })
 

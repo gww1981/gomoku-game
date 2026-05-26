@@ -36,6 +36,8 @@ export interface LanState {
   roomId: string
   opponentConnected: boolean
   undoRequested: boolean
+  moveDeadline: number | null
+  timerFor: Player | null
 }
 
 export interface GameState {
@@ -63,6 +65,7 @@ export type GameAction =
   | { type: 'OPPONENT_UNDO_REQUEST' }
   | { type: 'OPPONENT_LEFT' }
   | { type: 'RESIGN'; resignedBy: Player }
+  | { type: 'MOVE_TIMEOUT'; loser: Player }
 export const BOARD_SIZE = 15
 /** 游戏模式 */
 export type GameMode = 'pvp' | 'ai' | 'lan'

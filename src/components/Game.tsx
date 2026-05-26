@@ -166,11 +166,14 @@ export function Game() {
   useEffect(() => {
     if (prevStatusRef.current === 'playing' && state.status === 'won') {
       playSFX('win')
+      if (state.settings.mode === 'lan') {
+        network.notifyGameOver()
+      }
     } else if (prevStatusRef.current === 'playing' && state.status === 'draw') {
       playSFX('draw')
     }
     prevStatusRef.current = state.status
-  }, [state.status, playSFX])
+  }, [state.status, state.settings.mode, playSFX, network])
 
   useEffect(() => {
     if (!prevAIThinkingRef.current && state.isAIThinking) {
