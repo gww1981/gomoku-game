@@ -3,6 +3,7 @@ import type { GameMode, AIDifficulty } from '../game/types'
 interface ModeSelectProps {
   mode: GameMode
   aiDifficulty: AIDifficulty
+  isReplayMode?: boolean
   onSelect: (mode: GameMode, aiDifficulty?: AIDifficulty) => void
 }
 
@@ -12,14 +13,14 @@ const difficultyOptions: Array<{ difficulty: AIDifficulty; label: string }> = [
   { difficulty: 'hard', label: '困难' },
 ]
 
-export function ModeSelect({ mode, aiDifficulty, onSelect }: ModeSelectProps) {
+export function ModeSelect({ mode, aiDifficulty, isReplayMode, onSelect }: ModeSelectProps) {
   return (
     <div className="mode-toolbar">
       <div className="mode-group">
         <button
           type="button"
           aria-pressed={mode === 'pvp'}
-          disabled={mode === 'pvp'}
+          disabled={mode === 'pvp' && !isReplayMode}
           onClick={() => onSelect('pvp')}
         >
           双人
@@ -27,7 +28,7 @@ export function ModeSelect({ mode, aiDifficulty, onSelect }: ModeSelectProps) {
         <button
           type="button"
           aria-pressed={mode === 'ai'}
-          disabled={mode === 'ai'}
+          disabled={mode === 'ai' && !isReplayMode}
           onClick={() => onSelect('ai', aiDifficulty)}
         >
           AI 对战
@@ -35,7 +36,7 @@ export function ModeSelect({ mode, aiDifficulty, onSelect }: ModeSelectProps) {
         <button
           type="button"
           aria-pressed={mode === 'lan'}
-          disabled={mode === 'lan'}
+          disabled={mode === 'lan' && !isReplayMode}
           onClick={() => onSelect('lan')}
         >
           局域网对战

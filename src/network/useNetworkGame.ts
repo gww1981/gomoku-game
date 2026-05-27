@@ -102,6 +102,11 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
           type: 'SET_LAN_STATE',
           lanState: { opponentConnected: false },
         })
+        // 对手离开房间 → 判留在房间的玩家获胜
+        if (myColorRef.current) {
+          const opponentColor: Player = myColorRef.current === 'black' ? 'white' : 'black'
+          dispatchRef.current({ type: 'RESIGN', resignedBy: opponentColor })
+        }
       },
     })
     return () => {
