@@ -94,6 +94,15 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
       onMoveTimeout: ({ loser }) => {
         dispatchRef.current({ type: 'MOVE_TIMEOUT', loser })
       },
+      onGameReset: () => {
+        dispatchRef.current({ type: 'RESET' })
+      },
+      onOpponentLeft: () => {
+        dispatchRef.current({
+          type: 'SET_LAN_STATE',
+          lanState: { opponentConnected: false },
+        })
+      },
     })
     return () => {
       networkManager.removeHandlers()
@@ -178,8 +187,12 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
     networkManager.notifyGameOver()
   }, [])
 
+  const resetGame = useCallback(() => {
+    networkManager.resetGame()
+  }, [])
+
   const leaveRoom = useCallback(() => {
-    networkManager.clearRoom()
+    networkManager.leaveRoom()
     myColorRef.current = null
   }, [])
 
@@ -193,6 +206,7 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
     subscribeChat,
     resign,
     notifyGameOver,
+    resetGame,
     leaveRoom,
     connectionStatus,
     connectError,

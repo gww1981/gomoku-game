@@ -22,6 +22,8 @@ export type NetworkEventHandlers = {
   onOpponentTimeout: () => void
   onMoveTimerStart: (payload: MoveTimerStartPayload) => void
   onMoveTimeout: (payload: MoveTimeoutPayload) => void
+  onGameReset: () => void
+  onOpponentLeft: () => void
   onConnect: () => void
   onDisconnect: (reason: string) => void
   onConnectError: (error: Error) => void
@@ -88,6 +90,8 @@ export class NetworkManager {
     this.socket.on('opponent-timeout', handlers.onOpponentTimeout)
     this.socket.on('move-timer-start', handlers.onMoveTimerStart)
     this.socket.on('move-timeout', handlers.onMoveTimeout)
+    this.socket.on('game-reset', handlers.onGameReset)
+    this.socket.on('opponent-left', handlers.onOpponentLeft)
   }
 
   removeHandlers(): void {
@@ -103,6 +107,8 @@ export class NetworkManager {
     this.socket.off('opponent-timeout')
     this.socket.off('move-timer-start')
     this.socket.off('move-timeout')
+    this.socket.off('game-reset')
+    this.socket.off('opponent-left')
   }
 
   subscribeChat(cb: (message: string) => void): () => void {
@@ -162,6 +168,11 @@ export class NetworkManager {
     this.socket.emit('game-over', { roomId: this.roomId })
   }
 
+  resetGame(): void {
+    if (!this.socket || !this.roomId) return
+    this.socket.emit('reset-game', { roomId: this.roomId })
+  }
+
   async reconnect(oldSocketId: string): Promise<ReconnectResult> {
     return new Promise((resolve, reject) => {
       if (!this.socket || !this.roomId) return reject(new Error('未连接'))
@@ -185,6 +196,13 @@ export class NetworkManager {
 
   isConnected(): boolean {
     return this.socket?.connected ?? false
+  }
+
+  leaveRoom(): void {
+    if (!this.socket || !this.roomId) return
+    this.socket.emit('leave-room', { roomId: this.roomId })
+    this.roomId = null
+    this.chatListeners.clear()
   }
 
   clearRoom(): void {
