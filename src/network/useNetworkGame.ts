@@ -85,6 +85,18 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
           dispatchRef.current({ type: 'RESIGN', resignedBy: opponentColor })
         }
       },
+      onMoveTimerStart: ({ deadline, currentPlayer }) => {
+        dispatchRef.current({
+          type: 'SET_LAN_STATE',
+          lanState: { moveDeadline: deadline, timerFor: currentPlayer },
+        })
+      },
+      onMoveTimeout: ({ loser }) => {
+        dispatchRef.current({ type: 'MOVE_TIMEOUT', loser })
+      },
+      onGameReset: () => {
+        dispatchRef.current({ type: 'RESET' })
+      },
       onOpponentLeft: () => {
         dispatchRef.current({
           type: 'SET_LAN_STATE',
@@ -108,6 +120,8 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
         roomId,
         opponentConnected: false,
         undoRequested: false,
+        moveDeadline: null,
+        timerFor: null,
       },
     })
     return roomId
@@ -167,6 +181,14 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
     }
   }, [dispatch])
 
+  const notifyGameOver = useCallback(() => {
+    networkManager.notifyGameOver()
+  }, [])
+
+  const resetGame = useCallback(() => {
+    networkManager.resetGame()
+  }, [])
+
   const leaveRoom = useCallback(() => {
     networkManager.leaveRoom()
     myColorRef.current = null
@@ -181,6 +203,8 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
     sendChat,
     subscribeChat,
     resign,
+    notifyGameOver,
+    resetGame,
     leaveRoom,
     connectionStatus,
     connectError,

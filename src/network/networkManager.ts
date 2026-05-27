@@ -6,6 +6,8 @@ import type {
   GameStartPayload,
   ReconnectResult,
   JoinRoomResult,
+  MoveTimerStartPayload,
+  MoveTimeoutPayload,
 } from './types'
 
 export type NetworkEventHandlers = {
@@ -18,6 +20,9 @@ export type NetworkEventHandlers = {
   onOpponentDisconnected: () => void
   onOpponentReconnected: () => void
   onOpponentTimeout: () => void
+  onMoveTimerStart: (payload: MoveTimerStartPayload) => void
+  onMoveTimeout: (payload: MoveTimeoutPayload) => void
+  onGameReset: () => void
   onOpponentLeft: () => void
   onConnect: () => void
   onDisconnect: (reason: string) => void
@@ -83,6 +88,9 @@ export class NetworkManager {
     this.socket.on('opponent-disconnected', handlers.onOpponentDisconnected)
     this.socket.on('opponent-reconnected', handlers.onOpponentReconnected)
     this.socket.on('opponent-timeout', handlers.onOpponentTimeout)
+    this.socket.on('move-timer-start', handlers.onMoveTimerStart)
+    this.socket.on('move-timeout', handlers.onMoveTimeout)
+    this.socket.on('game-reset', handlers.onGameReset)
     this.socket.on('opponent-left', handlers.onOpponentLeft)
   }
 
@@ -97,6 +105,9 @@ export class NetworkManager {
     this.socket.off('opponent-disconnected')
     this.socket.off('opponent-reconnected')
     this.socket.off('opponent-timeout')
+    this.socket.off('move-timer-start')
+    this.socket.off('move-timeout')
+    this.socket.off('game-reset')
     this.socket.off('opponent-left')
   }
 
@@ -150,6 +161,16 @@ export class NetworkManager {
   resign(): void {
     if (!this.socket || !this.roomId) return
     this.socket.emit('resign', { roomId: this.roomId })
+  }
+
+  notifyGameOver(): void {
+    if (!this.socket || !this.roomId) return
+    this.socket.emit('game-over', { roomId: this.roomId })
+  }
+
+  resetGame(): void {
+    if (!this.socket || !this.roomId) return
+    this.socket.emit('reset-game', { roomId: this.roomId })
   }
 
   async reconnect(oldSocketId: string): Promise<ReconnectResult> {
