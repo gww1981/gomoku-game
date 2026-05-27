@@ -29,7 +29,10 @@ function startMoveTimer(roomId, currentPlayer) {
     if (!r || r.status !== 'playing') { moveTimeoutHandles.delete(roomId); return }
     console.log(`[落子超时] ${roomId} loser=${currentPlayer}`)
     io.to(roomId).emit('move-timeout', { loser: currentPlayer })
+<<<<<<< HEAD
     roomManager.deleteRoom(roomId)
+=======
+>>>>>>> 19c68b729ab21a6a6b57f2b82135c1d9b3da38f2
     moveTimeoutHandles.delete(roomId)
   }, MOVE_TIMEOUT_MS)
   moveTimeoutHandles.set(roomId, handle)
@@ -103,6 +106,7 @@ io.on('connection', (socket) => {
     if (!room || !room.undoRequester) return
     socket.to(roomId).emit('undo-responded', { accepted })
     if (accepted) {
+<<<<<<< HEAD
       const room = roomManager.getRoom(roomId)
       if (room && room.undoRequester) {
         roomManager.rollbackLastMoveOf(roomId, room.undoRequester)
@@ -112,6 +116,12 @@ io.on('connection', (socket) => {
     }
       roomManager.rollbackLastMoveOf(roomId, room.undoRequester)
       startMoveTimer(roomId, room.currentPlayer)
+=======
+      roomManager.rollbackLastMoveOf(roomId, room.undoRequester)
+      startMoveTimer(roomId, room.currentPlayer)
+    }
+    room.undoRequester = null
+>>>>>>> 19c68b729ab21a6a6b57f2b82135c1d9b3da38f2
   })
 
   socket.on('chat', ({ roomId, message }) => {
