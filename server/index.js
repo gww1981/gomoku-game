@@ -77,6 +77,11 @@ io.on('connection', (socket) => {
   })
 
   socket.on('move', ({ roomId, row, col, player }) => {
+    const room = roomManager.getRoom(roomId)
+    if (!room || room.status !== 'playing') return
+    if (room.blackId !== socket.id && room.whiteId !== socket.id) return
+    if (room.currentPlayer !== player) return
+    if (!Number.isInteger(row) || !Number.isInteger(col) || row < 0 || row >= 15 || col < 0 || col >= 15) return
     roomManager.recordMove(roomId, { row, col, player })
     socket.to(roomId).emit('opponent-move', { row, col, player })
     const nextPlayer = player === 'black' ? 'white' : 'black'
@@ -86,12 +91,16 @@ io.on('connection', (socket) => {
   socket.on('request-undo', ({ roomId }) => {
     const room = roomManager.getRoom(roomId)
     if (!room) return
+    // 已有待处理的悔棋请求，拒绝新请求
+    if (room.undoRequester) return
     // 记录请求方是黑还是白，供 respond-undo 使用
     room.undoRequester = room.blackId === socket.id ? 'black' : 'white'
     socket.to(roomId).emit('undo-requested')
   })
 
   socket.on('respond-undo', ({ roomId, accepted }) => {
+    const room = roomManager.getRoom(roomId)
+    if (!room || !room.undoRequester) return
     socket.to(roomId).emit('undo-responded', { accepted })
     if (accepted) {
       const room = roomManager.getRoom(roomId)
@@ -101,6 +110,8 @@ io.on('connection', (socket) => {
         startMoveTimer(roomId, room.currentPlayer)
       }
     }
+      roomManager.rollbackLastMoveOf(roomId, room.undoRequester)
+      startMoveTimer(roomId, room.currentPlayer)
   })
 
   socket.on('chat', ({ roomId, message }) => {
@@ -133,6 +144,7 @@ io.on('connection', (socket) => {
       const handle = setTimeout(() => {
         const r = roomManager.getRoom(room.roomId)
         if (r && r.disconnectedAt !== null) {
+          clearMoveTimer(room.roomId)
           console.log(`[超时判负] ${room.roomId}`)
           io.to(room.roomId).emit('opponent-timeout')
           roomManager.deleteRoom(room.roomId)
@@ -161,6 +173,17 @@ io.on('connection', (socket) => {
 
   socket.on('game-over', ({ roomId }) => {
     clearMoveTimer(roomId)
+    const room = roomManager.getRoom(roomId)
+    if (room) room.status = 'ended'
+  })
+
+  socket.on('reset-game', ({ roomId }) => {
+    const room = roomManager.getRoom(roomId)
+    if (!room) return
+    if (!roomManager.resetGame(roomId)) return // 仅首次重置生效
+    io.to(roomId).emit('game-reset')
+    startMoveTimer(roomId, 'black')
+    console.log(`[重置游戏] ${roomId}`)
   })
 
   socket.on('leave-room', ({ roomId }) => {

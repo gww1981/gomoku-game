@@ -314,4 +314,38 @@ describe('gameReducer - LAN actions', () => {
     expect(state.board[7][7]).toBeNull()
     expect(state.board[8][8]).toBeNull()
   })
+
+  it('MOVE_TIMEOUT 黑方超时 -> 白方胜', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, { type: 'SET_MODE', mode: 'lan' })
+    state = gameReducer(state, { type: 'MOVE', row: 7, col: 7 }) // black
+    state = gameReducer(state, {
+      type: 'SET_LAN_STATE',
+      lanState: { moveDeadline: Date.now() + 30000, timerFor: 'white' },
+    })
+    state = gameReducer(state, { type: 'MOVE_TIMEOUT', loser: 'white' })
+    expect(state.status).toBe('won')
+    expect(state.winner).toBe('black')
+    expect(state.lanState?.moveDeadline).toBeNull()
+    expect(state.lanState?.timerFor).toBeNull()
+  })
+
+  it('MOVE_TIMEOUT 白方超时 -> 黑方胜', () => {
+    let state = getInitialGameState()
+    state = gameReducer(state, { type: 'SET_MODE', mode: 'lan' })
+    state = gameReducer(state, { type: 'MOVE_TIMEOUT', loser: 'white' })
+    expect(state.status).toBe('won')
+    expect(state.winner).toBe('black')
+  })
+
+  it('MOVE_TIMEOUT 非 playing 状态应被忽略', () => {
+    let state = getInitialGameState()
+    // 先认输使 status 变为 won
+    state = gameReducer(state, { type: 'RESIGN', resignedBy: 'black' })
+    expect(state.status).toBe('won')
+    // 再发 MOVE_TIMEOUT 应无效
+    state = gameReducer(state, { type: 'MOVE_TIMEOUT', loser: 'white' })
+    expect(state.status).toBe('won')
+    expect(state.winner).toBe('white') // 应保持原结果
+  })
 })

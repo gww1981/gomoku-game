@@ -165,4 +165,34 @@ describe('Game dashboard', () => {
     const replayWrites = setItemSpy.mock.calls.filter(([key]) => key === 'gomoku-game-records')
     expect(replayWrites).toHaveLength(1)
   })
+
+  it('exits replay mode and resets board when switching mode during replay', () => {
+    const { container } = renderGame()
+    const cells = getCells(container)
+
+    // Play a game to completion (black wins with 5 in a row)
+    fireEvent.click(cells[0])   // black
+    fireEvent.click(cells[15])  // white
+    fireEvent.click(cells[1])   // black
+    fireEvent.click(cells[16])  // white
+    fireEvent.click(cells[2])   // black
+    fireEvent.click(cells[17])  // white
+    fireEvent.click(cells[3])   // black
+    fireEvent.click(cells[18])  // white
+    fireEvent.click(cells[4])   // black wins
+
+    // Game ended -> should auto-enter replay mode
+    expect(screen.getByText('退出回放')).toBeInTheDocument()
+
+    // Switch to double mode
+    fireEvent.click(screen.getByRole('button', { name: '双人' }))
+
+    // Should exit replay mode, show normal UI
+    expect(screen.queryByText('退出回放')).not.toBeInTheDocument()
+    expect(screen.getByText('黑棋回合')).toBeInTheDocument()
+
+    // Board should be reset
+    const resetCells = getCells(container)
+    expect(resetCells[0]).toHaveAttribute('data-piece', '')
+  })
 })
