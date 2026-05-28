@@ -102,7 +102,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         winningCells: [],
         status: 'playing',
         winner: null,
-        lanState: state.lanState ? { ...state.lanState, undoRequested: false } : null,
+        lanState: state.lanState ? { ...state.lanState, undoRequested: false, moveDeadline: null, timerFor: null } : null,
       }
     }
 

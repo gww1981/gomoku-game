@@ -271,6 +271,7 @@ export function Game() {
           <ModeSelect
             mode={state.settings.mode}
             aiDifficulty={state.settings.aiDifficulty}
+            isReplayMode={isReplayMode}
             onSelect={handleModeSelect}
           />
         </header>
@@ -375,6 +376,7 @@ export function Game() {
           myColor={state.lanState.myColor}
           onConfirm={handleTimeoutConfirm}
         />
+      )}
       {showLanLeaveConfirm && (
         <div className="dialog-overlay">
           <div className="dialog">
