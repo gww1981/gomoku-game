@@ -61,7 +61,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...getInitialGameState(),
         settings: state.settings,
-        lanState: state.lanState,
+        lanState: state.lanState
+          ? { ...state.lanState, moveDeadline: null, timerFor: null }
+          : null,
       }
 
     case 'UNDO': {
