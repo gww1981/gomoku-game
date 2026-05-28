@@ -70,14 +70,14 @@ export function createRoomManager() {
       }
     },
 
-    // 悔棋：从尾部移除最后一手属于 player 的棋，返回悔棋后的 currentPlayer
+    // 悔棋：从尾部移除该玩家最后一手及其之后的所有棋步，保持客户端/服务端状态一致
     rollbackLastMoveOf(roomId, player) {
       const room = rooms.get(roomId)
       if (!room) return null
-      // 从后往前找到该玩家最后一手并移除
+      // 从后往前找到该玩家最后一手，删除该位置到末尾的所有棋步
       for (let i = room.moves.length - 1; i >= 0; i--) {
         if (room.moves[i].player === player) {
-          room.moves.splice(i, 1)
+          room.moves.splice(i)
           break
         }
       }

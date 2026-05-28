@@ -101,6 +101,14 @@ io.on('connection', (socket) => {
   socket.on('respond-undo', ({ roomId, accepted }) => {
     const room = roomManager.getRoom(roomId)
     if (!room || !room.undoRequester) return
+    // 游戏未在进行中则拒绝悔棋响应
+    if (room.status !== 'playing') {
+      room.undoRequester = null
+      return
+    }
+    // 确保响应者不是请求方本人
+    const responderColor = room.blackId === socket.id ? 'black' : 'white'
+    if (responderColor === room.undoRequester) return
     socket.to(roomId).emit('undo-responded', { accepted })
     if (accepted) {
       roomManager.rollbackLastMoveOf(roomId, room.undoRequester)

@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "express": "^4.21.0",
-    "gomoku-game": "file:..",
     "socket.io": "^4.8.0"
   },
   "devDependencies": {
