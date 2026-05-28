@@ -85,11 +85,28 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
           dispatchRef.current({ type: 'RESIGN', resignedBy: opponentColor })
         }
       },
+      onMoveTimerStart: ({ deadline, currentPlayer }) => {
+        dispatchRef.current({
+          type: 'SET_LAN_STATE',
+          lanState: { moveDeadline: deadline, timerFor: currentPlayer },
+        })
+      },
+      onMoveTimeout: ({ loser }) => {
+        dispatchRef.current({ type: 'MOVE_TIMEOUT', loser })
+      },
+      onGameReset: () => {
+        dispatchRef.current({ type: 'RESET' })
+      },
       onOpponentLeft: () => {
         dispatchRef.current({
           type: 'SET_LAN_STATE',
           lanState: { opponentConnected: false },
         })
+        // 对手离开房间 → 判留在房间的玩家获胜
+        if (myColorRef.current) {
+          const opponentColor: Player = myColorRef.current === 'black' ? 'white' : 'black'
+          dispatchRef.current({ type: 'RESIGN', resignedBy: opponentColor })
+        }
       },
     })
     return () => {
@@ -108,6 +125,8 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
         roomId,
         opponentConnected: false,
         undoRequested: false,
+        moveDeadline: null,
+        timerFor: null,
       },
     })
     return roomId
@@ -124,6 +143,8 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
           roomId,
           opponentConnected: true,
           undoRequested: false,
+          moveDeadline: null,
+          timerFor: null,
         },
       })
     }
@@ -167,6 +188,14 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
     }
   }, [dispatch])
 
+  const notifyGameOver = useCallback(() => {
+    networkManager.notifyGameOver()
+  }, [])
+
+  const resetGame = useCallback(() => {
+    networkManager.resetGame()
+  }, [])
+
   const leaveRoom = useCallback(() => {
     networkManager.leaveRoom()
     myColorRef.current = null
@@ -181,6 +210,8 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
     sendChat,
     subscribeChat,
     resign,
+    notifyGameOver,
+    resetGame,
     leaveRoom,
     connectionStatus,
     connectError,

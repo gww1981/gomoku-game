@@ -50,6 +50,49 @@ describe('roomManager', () => {
     assert.deepEqual(room.moves[0], { row: 7, col: 7, player: 'black' })
   })
 
+  test('rollbackLastMoveOf 应移除该玩家最后一手并设置 currentPlayer', () => {
+    const rm = createRoomManager()
+    const roomId = rm.createRoom('socket1')
+    rm.joinRoom(roomId, 'socket2')
+    rm.recordMove(roomId, { row: 7, col: 7, player: 'black' })
+    rm.recordMove(roomId, { row: 8, col: 8, player: 'white' })
+    const result = rm.rollbackLastMoveOf(roomId, 'white')
+    assert.equal(result, 'white')
+    const room = rm.getRoom(roomId)
+    assert.equal(room.moves.length, 1)
+    assert.deepEqual(room.moves[0], { row: 7, col: 7, player: 'black' })
+    assert.equal(room.currentPlayer, 'white')
+  })
+
+  test('rollbackLastMoveOf 空 moves 应安全返回', () => {
+    const rm = createRoomManager()
+    const roomId = rm.createRoom('socket1')
+    rm.joinRoom(roomId, 'socket2')
+    const result = rm.rollbackLastMoveOf(roomId, 'black')
+    assert.equal(result, 'black')
+    const room = rm.getRoom(roomId)
+    assert.equal(room.moves.length, 0)
+    assert.equal(room.currentPlayer, 'black')
+  })
+
+  test('rollbackLastMoveOf 该玩家只有一手时应正确移除', () => {
+    const rm = createRoomManager()
+    const roomId = rm.createRoom('socket1')
+    rm.joinRoom(roomId, 'socket2')
+    rm.recordMove(roomId, { row: 7, col: 7, player: 'black' })
+    const result = rm.rollbackLastMoveOf(roomId, 'black')
+    assert.equal(result, 'black')
+    const room = rm.getRoom(roomId)
+    assert.equal(room.moves.length, 0)
+    assert.equal(room.currentPlayer, 'black')
+  })
+
+  test('rollbackLastMoveOf 不存在的房间返回 null', () => {
+    const rm = createRoomManager()
+    const result = rm.rollbackLastMoveOf('NOTEXIST', 'black')
+    assert.equal(result, null)
+  })
+
   test('reconnect 成功后返回完整 moves 历史', () => {
     const rm = createRoomManager()
     const roomId = rm.createRoom('socket1')

@@ -61,6 +61,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...getInitialGameState(),
         settings: state.settings,
+        lanState: state.lanState,
       }
 
     case 'UNDO': {
@@ -101,7 +102,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         winningCells: [],
         status: 'playing',
         winner: null,
-        lanState: state.lanState ? { ...state.lanState, undoRequested: false } : null,
+        lanState: state.lanState ? { ...state.lanState, undoRequested: false, moveDeadline: null, timerFor: null } : null,
       }
     }
 
@@ -151,6 +152,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'MOVE': {
+      if (state.winReason) return state
       if (state.status !== 'playing') return state
       if (!canPlacePiece(state.board, action.row, action.col)) return state
 
@@ -171,6 +173,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         currentPlayer: won ? state.currentPlayer : (state.currentPlayer === 'black' ? 'white' : 'black') as Player,
         status: won ? 'won' : 'playing',
         winner: won ? state.currentPlayer : null,
+        winReason: won ? 'five' : undefined,
         lastMove: { row: action.row, col: action.col },
         winningCells: newWinningCells,
         moveHistory: [...state.moveHistory, newMoveRecord],
@@ -190,6 +193,8 @@ function handleLanAction(state: GameState, action: GameAction): GameState {
         roomId: '',
         opponentConnected: false,
         undoRequested: false,
+        moveDeadline: null,
+        timerFor: null,
       }
       return {
         ...state,
@@ -198,6 +203,7 @@ function handleLanAction(state: GameState, action: GameAction): GameState {
     }
 
     case 'OPPONENT_MOVE': {
+      if (state.winReason) return state
       if (state.status !== 'playing') return state
       if (!canPlacePiece(state.board, action.row, action.col)) return state
 
@@ -212,6 +218,7 @@ function handleLanAction(state: GameState, action: GameAction): GameState {
         currentPlayer: won ? state.currentPlayer : (state.currentPlayer === 'black' ? 'white' : 'black') as Player,
         status: won ? 'won' : 'playing',
         winner: won ? state.currentPlayer : null,
+        winReason: won ? 'five' : undefined,
         lastMove: { row: action.row, col: action.col },
         winningCells: newWinningCells,
         moveHistory: [
@@ -249,7 +256,23 @@ function handleLanAction(state: GameState, action: GameAction): GameState {
         ...state,
         status: 'won',
         winner,
+        winReason: 'resign',
         winningCells: [],
+      }
+    }
+
+    case 'MOVE_TIMEOUT': {
+      if (state.status !== 'playing') return state
+      const winner: Player = action.loser === 'black' ? 'white' : 'black'
+      return {
+        ...state,
+        status: 'won',
+        winner,
+        winReason: 'timeout',
+        winningCells: [],
+        lanState: state.lanState
+          ? { ...state.lanState, moveDeadline: null, timerFor: null }
+          : null,
       }
     }
 
