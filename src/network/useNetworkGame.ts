@@ -86,6 +86,14 @@ export function useNetworkGame(dispatch: React.Dispatch<GameAction>) {
         }
       },
       onMoveTimerStart: ({ deadline, currentPlayer }) => {
+        if (deadline <= Date.now()) {
+          // 过期时清空 timerFor，避免显示错误的计时器
+          dispatchRef.current({
+            type: 'SET_LAN_STATE',
+            lanState: { moveDeadline: null, timerFor: null },
+          })
+          return
+        }
         dispatchRef.current({
           type: 'SET_LAN_STATE',
           lanState: { moveDeadline: deadline, timerFor: currentPlayer },
