@@ -67,6 +67,7 @@ export type GameAction =
   | { type: 'OPPONENT_LEFT' }
   | { type: 'RESIGN'; resignedBy: Player }
   | { type: 'MOVE_TIMEOUT'; loser: Player }
+  | { type: 'GAME_RESET_CONFIRMED' }
 export const BOARD_SIZE = 15
 /** 游戏模式 */
 export type GameMode = 'pvp' | 'ai' | 'lan'

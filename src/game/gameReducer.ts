@@ -58,6 +58,8 @@ export function getInitialGameState(): GameState {
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'RESET':
+      // 防御性检查：如果游戏已结束（status !== 'playing'），拒绝 RESET 以保留游戏结果
+      if (state.status !== 'playing') return state
       return {
         ...getInitialGameState(),
         settings: state.settings,
@@ -65,6 +67,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ? { ...state.lanState, moveDeadline: null, timerFor: null }
           : null,
       }
+
+    case 'GAME_RESET_CONFIRMED': {
+      if (state.status !== 'playing') return state
+      // 由 NetworkManager 在游戏进行中收到 game-reset 后触发，执行实际重置
+      return {
+        ...getInitialGameState(),
+        settings: state.settings,
+        lanState: state.lanState
+          ? { ...state.lanState, moveDeadline: null, timerFor: null }
+          : null,
+      }
+    }
 
     case 'UNDO': {
       if (state.status !== 'playing') return state
