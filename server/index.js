@@ -27,8 +27,8 @@ function startMoveTimer(roomId, currentPlayer) {
   const handle = setTimeout(() => {
     const r = roomManager.getRoom(roomId)
     if (!r || r.status !== 'playing') { moveTimeoutHandles.delete(roomId); return }
-    console.log(`[落子超时] ${roomId} loser=${currentPlayer}`)
-    io.to(roomId).emit('move-timeout', { loser: currentPlayer })
+    console.log(`[落子超时] ${roomId} loser=${r.currentPlayer}`)
+    io.to(roomId).emit('move-timeout', { loser: r.currentPlayer })
     r.status = 'ended'  // 保留房间以供 reset-game / leave-room 清理
     moveTimeoutHandles.delete(roomId)
   }, MOVE_TIMEOUT_MS)
