@@ -58,6 +58,8 @@ export function getInitialGameState(): GameState {
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'RESET':
+      // 防御性检查：如果游戏已结束（status !== 'playing'），拒绝 RESET 以保留游戏结果
+      if (state.status !== 'playing') return state
       return {
         ...getInitialGameState(),
         settings: state.settings,
