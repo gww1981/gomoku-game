@@ -198,6 +198,15 @@ function handleLanAction(state: GameState, action: GameAction): GameState {
         moveDeadline: null,
         timerFor: null,
       }
+      // 如果要设置 opponentConnected: true，但游戏已结束，则忽略该操作
+      // 防止游戏结束后对手重连错误重置 opponentConnected 状态
+      if (action.lanState.opponentConnected === true && state.status !== 'playing') {
+        const { opponentConnected: _, ...rest } = action.lanState
+        return {
+          ...state,
+          lanState: { ...prev, ...rest },
+        }
+      }
       return {
         ...state,
         lanState: { ...prev, ...action.lanState },
