@@ -124,6 +124,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
 
     case 'AI_MOVE': {
+      if (state.winReason) return state  // 与 MOVE 保持一致
       if (state.status !== 'playing') return state
       if (!canPlacePiece(state.board, action.row, action.col)) return state
 
