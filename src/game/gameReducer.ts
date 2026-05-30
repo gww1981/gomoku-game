@@ -66,6 +66,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           : null,
       }
 
+    case 'GAME_RESET_CONFIRMED': {
+      if (state.status !== 'playing') return state
+      // 由 NetworkManager 在游戏进行中收到 game-reset 后触发，执行实际重置
+      return {
+        ...getInitialGameState(),
+        settings: state.settings,
+        lanState: state.lanState
+          ? { ...state.lanState, moveDeadline: null, timerFor: null }
+          : null,
+      }
+    }
+
     case 'UNDO': {
       if (state.status !== 'playing') return state
       if (state.moveHistory.length === 0) return state
