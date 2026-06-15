@@ -71,6 +71,18 @@
   line-height: 1;
 }
 
+.record-list-close-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .record-list-clear:hover,
 .record-list-close:hover {
   color: var(--accent-red);
