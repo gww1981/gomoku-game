@@ -49,12 +49,27 @@ export function GameRecordList({ isOpen, onClose, onSelectRecord }: GameRecordLi
   return (
     <>
       <div className="record-list-overlay" onClick={onClose} />
-      <div className="record-list-drawer">
+      <div
+        className="record-list-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="record-list-title"
+      >
         <div className="record-list-header">
-          <h3>📜 历史对局</h3>
-          {records.length > 0 && (
-            <button className="record-list-clear" onClick={handleClear}>清空</button>
-          )}
+          <h3 id="record-list-title">📜 历史对局</h3>
+          <div className="record-list-header-actions">
+            {records.length > 0 && (
+              <button className="record-list-clear" onClick={handleClear}>清空</button>
+            )}
+            <button
+              type="button"
+              className="record-list-close"
+              aria-label="关闭录像列表"
+              onClick={onClose}
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         <div className="record-list-body">

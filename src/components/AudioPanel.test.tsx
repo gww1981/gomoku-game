@@ -53,11 +53,11 @@ const mockAudioValue: AudioContextValue = {
   clearAudioError: vi.fn(),
 }
 
-function renderPanel(overrides: Partial<AudioContextValue> = {}) {
+function renderPanel(overrides: Partial<AudioContextValue> = {}, props: { hidden?: boolean } = {}) {
   const value = { ...mockAudioValue, ...overrides }
   return render(
     <AudioCtx.Provider value={value}>
-      <AudioPanel />
+      <AudioPanel {...props} />
     </AudioCtx.Provider>
   )
 }
@@ -69,6 +69,33 @@ describe('AudioPanel', () => {
 
   it('defaults to a collapsed icon button', () => {
     renderPanel()
+    expect(screen.getByRole('button', { name: labels.control })).toBeInTheDocument()
+    expect(screen.queryByText(labels.bgm)).not.toBeInTheDocument()
+  })
+
+  it('does not render while hidden', () => {
+    renderPanel({}, { hidden: true })
+    expect(screen.queryByRole('button', { name: labels.control })).not.toBeInTheDocument()
+  })
+
+  it('closes the panel when hidden before showing it again', () => {
+    const { rerender } = renderPanel()
+
+    fireEvent.click(screen.getByRole('button', { name: labels.control }))
+    expect(screen.getByText(labels.bgm)).toBeInTheDocument()
+
+    rerender(
+      <AudioCtx.Provider value={mockAudioValue}>
+        <AudioPanel hidden />
+      </AudioCtx.Provider>
+    )
+    expect(screen.queryByRole('button', { name: labels.control })).not.toBeInTheDocument()
+
+    rerender(
+      <AudioCtx.Provider value={mockAudioValue}>
+        <AudioPanel />
+      </AudioCtx.Provider>
+    )
     expect(screen.getByRole('button', { name: labels.control })).toBeInTheDocument()
     expect(screen.queryByText(labels.bgm)).not.toBeInTheDocument()
   })

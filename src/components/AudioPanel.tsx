@@ -4,7 +4,11 @@ import { useAudio } from '../audio/useAudio'
 import type { BGMTrackId } from '../audio/types'
 import './AudioPanel.css'
 
-export function AudioPanel() {
+interface AudioPanelProps {
+  hidden?: boolean
+}
+
+export function AudioPanel({ hidden = false }: AudioPanelProps) {
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -27,6 +31,10 @@ export function AudioPanel() {
   const handleClose = useCallback(() => setOpen(false), [])
 
   useEffect(() => {
+    if (hidden) setOpen(false)
+  }, [hidden])
+
+  useEffect(() => {
     if (!open) return
     function handleClickOutside(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
@@ -47,6 +55,8 @@ export function AudioPanel() {
     void loadCustomFile(file)
     event.target.value = ''
   }
+
+  if (hidden) return null
 
   return (
     <div className="audio-panel-float" ref={panelRef}>

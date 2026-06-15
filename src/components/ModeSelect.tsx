@@ -42,20 +42,22 @@ export function ModeSelect({ mode, aiDifficulty, isReplayMode, onSelect }: ModeS
           局域网对战
         </button>
       </div>
-      <div className="mode-group">
-        {difficultyOptions.map((option) => (
-          <button
-            key={option.difficulty}
-            type="button"
-            className="difficulty-choice"
-            aria-pressed={aiDifficulty === option.difficulty}
-            disabled={mode !== 'ai' || aiDifficulty === option.difficulty}
-            onClick={() => onSelect('ai', option.difficulty)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      {mode === 'ai' && (
+        <div className="mode-group difficulty-group">
+          {difficultyOptions.map((option) => (
+            <button
+              key={option.difficulty}
+              type="button"
+              className="difficulty-choice"
+              aria-pressed={aiDifficulty === option.difficulty}
+              disabled={aiDifficulty === option.difficulty}
+              onClick={() => onSelect('ai', option.difficulty)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
