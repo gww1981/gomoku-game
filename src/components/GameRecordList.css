@@ -42,7 +42,14 @@
   color: var(--text-primary);
 }
 
-.record-list-clear {
+.record-list-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.record-list-clear,
+.record-list-close {
   padding: 4px 10px;
   background: rgba(28, 18, 12, 0.74);
   border: 1px solid rgba(201, 168, 108, 0.28);
@@ -53,7 +60,31 @@
   transition: background 160ms ease, color 160ms ease;
 }
 
-.record-list-clear:hover {
+.record-list-close {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.record-list-close-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.record-list-clear:hover,
+.record-list-close:hover {
   color: var(--accent-red);
   border-color: var(--accent-red);
 }

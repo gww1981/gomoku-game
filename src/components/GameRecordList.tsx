@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { GameRecord } from '../game/types'
 import { loadGameRecords, deleteGameRecord, clearGameRecords } from '../replay/storage'
 import './GameRecordList.css'
@@ -28,9 +28,25 @@ function getResultBadge(winner: 'black' | 'white' | 'draw' | null) {
 
 export function GameRecordList({ isOpen, onClose, onSelectRecord }: GameRecordListProps) {
   const [records, setRecords] = useState<GameRecord[]>([])
+  const drawerRef = useRef<HTMLDivElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     if (isOpen) setRecords(loadGameRecords())
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    previousFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null
+    closeButtonRef.current?.focus()
+
+    return () => {
+      previousFocusRef.current?.focus()
+    }
   }, [isOpen])
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -44,17 +60,72 @@ export function GameRecordList({ isOpen, onClose, onSelectRecord }: GameRecordLi
     setRecords([])
   }
 
+  const handleDrawerKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      onClose()
+      return
+    }
+
+    if (e.key !== 'Tab') return
+
+    const focusableElements = drawerRef.current?.querySelectorAll<HTMLElement>(
+      'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+    )
+    const focusable = Array.from(focusableElements ?? []).filter((element) => {
+      return element.offsetParent !== null || element === document.activeElement
+    })
+
+    if (focusable.length === 0) {
+      e.preventDefault()
+      return
+    }
+
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+      return
+    }
+
+    if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
+
   if (!isOpen) return null
 
   return (
     <>
       <div className="record-list-overlay" onClick={onClose} />
-      <div className="record-list-drawer">
+      <div
+        className="record-list-drawer"
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="record-list-title"
+        onKeyDown={handleDrawerKeyDown}
+      >
         <div className="record-list-header">
-          <h3>📜 历史对局</h3>
-          {records.length > 0 && (
-            <button className="record-list-clear" onClick={handleClear}>清空</button>
-          )}
+          <h3 id="record-list-title">📜 历史对局</h3>
+          <div className="record-list-header-actions">
+            {records.length > 0 && (
+              <button className="record-list-clear" onClick={handleClear}>清空</button>
+            )}
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className="record-list-close"
+              aria-label="关闭录像列表"
+              onClick={onClose}
+            >
+              <span aria-hidden="true">×</span>
+              <span className="record-list-close-text">关闭录像列表</span>
+            </button>
+          </div>
         </div>
 
         <div className="record-list-body">

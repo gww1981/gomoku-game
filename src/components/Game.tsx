@@ -260,6 +260,12 @@ export function Game() {
     network.resetGame()
   }, [network])
 
+  const isOverlayOpen = replayOpen ||
+    !!state.lanState?.undoRequested ||
+    showResignDialog ||
+    showTimeoutDialog ||
+    showLanLeaveConfirm
+
   return (
     <main className="game-shell">
       <section className="game-dashboard" aria-label="五子棋棋盘仪表盘">
@@ -352,7 +358,7 @@ export function Game() {
           </div>
         )}
       </section>
-      <AudioPanel />
+      <AudioPanel hidden={isOverlayOpen} />
       <GameRecordList
         isOpen={replayOpen}
         onClose={handleCloseReplayList}

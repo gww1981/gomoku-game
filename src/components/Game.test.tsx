@@ -74,9 +74,9 @@ describe('Game dashboard', () => {
     expect(screen.getByRole('heading', { name: '五子棋' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '双人' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'AI 对战' })).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByRole('button', { name: '简单' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '中等' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: '困难' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: '简单' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '中等' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '困难' })).not.toBeInTheDocument()
     expect(screen.getByText('黑棋回合')).toBeInTheDocument()
     expect(getCells(container)).toHaveLength(225)
   })
@@ -87,9 +87,25 @@ describe('Game dashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'AI 对战' }))
 
     expect(screen.getByRole('button', { name: 'AI 对战' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '简单' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '中等' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '困难' })).toBeInTheDocument()
     expect(screen.getByText('人机对战 · 中等')).toBeInTheDocument()
     expect(getCells(container)).toHaveLength(225)
+  })
+
+  it('hides the audio control while the replay list drawer is open', () => {
+    renderGame()
+
+    expect(screen.getByRole('button', { name: '音频控制' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '录像列表' }))
+
+    expect(screen.queryByRole('button', { name: '音频控制' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '关闭录像列表' }))
+
+    expect(screen.getByRole('button', { name: '音频控制' })).toBeInTheDocument()
   })
 
   it('lets the player choose hard difficulty after choosing AI mode', () => {

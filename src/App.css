@@ -385,18 +385,21 @@
   }
 
   .game-header {
-    align-items: center;
-    flex-direction: row;
-    justify-content: space-between;
+    align-items: stretch;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 12px;
     padding: 10px 14px;
   }
 
   .brand-block {
+    justify-content: space-between;
     gap: 8px;
   }
 
   .game-header h1 {
     font-size: 1.2rem;
+    white-space: nowrap;
   }
 
   .eyebrow {
@@ -404,18 +407,22 @@
   }
 
   .mode-toolbar {
-    justify-content: flex-end;
+    width: 100%;
+    justify-content: flex-start;
     gap: 4px;
   }
 
   .mode-group {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 4px;
   }
 
   .mode-group button,
   .mode-choice,
   .difficulty-choice {
-    min-width: 60px;
+    min-width: 0;
     padding: 0 10px;
     min-height: 36px;
     font-size: 11px;
